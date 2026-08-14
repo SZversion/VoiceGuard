@@ -27,3 +27,17 @@ build/
 
 # 로그
 *.log
+
+# 개인정보·대용량 산출물·모델·실행 로그
+data/raw/*
+data/interim/*
+models/checkpoints/*
+logs/*
+outputs/*
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!models/checkpoints/.gitkeep
+!logs/.gitkeep
+!outputs/demo/.gitkeep
+!outputs/reports/.gitkeep
+!outputs/figures/.gitkeep
