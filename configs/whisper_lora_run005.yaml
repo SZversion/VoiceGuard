@@ -1,0 +1,36 @@
+data:
+  root: E:/새 폴더/run_03/stt_finetuning_cleaned_v4_beep_removed
+  extensions:
+    - .wav
+    - .mp3
+    - .flac
+    - .m4a
+    - .ogg
+  train_ratio: 0.8
+  validation_ratio: 0.1
+  test_ratio: 0.1
+  seed: 42
+  group_by_source: true
+
+model_name: openai/whisper-small
+language: ko
+task: transcribe
+
+lora:
+  r: 8
+  alpha: 16
+  dropout: 0.05
+  target_modules:
+    - q_proj
+    - v_proj
+
+training:
+  per_device_train_batch_size: 2
+  per_device_eval_batch_size: 2
+  gradient_accumulation_steps: 8
+  learning_rate: 0.00005
+  num_train_epochs: 2
+  fp16: true
+  evaluation_strategy: epoch
+  save_strategy: epoch
+  logging_steps: 10

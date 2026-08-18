@@ -1,2 +1,17 @@
-# Python 3.11 의존성을 이 파일에 기록합니다.
+# CPU STT runtime
+faster-whisper
+
+# Whisper LoRA fine-tuning and evaluation
+transformers
+datasets
+peft
+accelerate
+evaluate
+jiwer
+PyYAML
+soundfile
+
+# Jupyter/VS Code Notebook runtime
+ipykernel>=6.29
+jupyterlab>=4.2,<5
 
