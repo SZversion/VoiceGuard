@@ -340,7 +340,8 @@ Recall과 FNR을 우선하고 FPR을 함께 검토하여 최종 집계 방식을
 | GET | `/health` | API 서버 상태 확인 |
 | GET | `/model-status` | 두 모델의 준비 상태 확인 |
 | POST | `/analyze` | 음성파일 분석 작업 생성 및 `job_id` 반환 |
-| GET | `/analyze/{job_id}` | 분석 작업 상태·단계·완료 결과 조회 |
+| GET | `/analyze/{job_id}/status` | 분석 작업 상태 조회 |
+| GET | `/analyze/{job_id}/result` | 분석 작업 완료 조회 |
 | DELETE | `/analyze/{job_id}` | 분석 작업 취소 및 결과 폐기 |
 
 분석은 비동기 작업으로 처리합니다. 프론트엔드는 상태 조회 API를 주기적으로 호출하여 사용자에게 현재 분석 단계를 표시합니다. 별도의 결과 다운로드 API는 사용하지 않습니다.
