@@ -10,6 +10,7 @@ __pycache__/
 *.pyc
 venv/
 .venv/
+.deps/
 *.egg-info/
 .ipynb_checkpoints/
 
@@ -30,14 +31,37 @@ build/
 
 # 개인정보·대용량 산출물·모델·실행 로그
 data/raw/*
+data/labels/*
+data/processed_labels/*
 data/interim/*
 models/checkpoints/*
 logs/*
 outputs/*
 !data/raw/.gitkeep
+!data/labels/.gitkeep
 !data/interim/.gitkeep
 !models/checkpoints/.gitkeep
 !logs/.gitkeep
 !outputs/demo/.gitkeep
 !outputs/reports/.gitkeep
 !outputs/figures/.gitkeep
+
+# NeMo/Whisper model caches and local environments
+hf-cache/
+torch-cache/
+pip-cache/
+*.nemo
+.cache/
+data/processed_stt*/
+data/processed_labels*/
+data/preprocessed_audio*/
+data/stt_evaluation/
+data/fine_tuning/
+data/stt_evaluation/whisper_lora/
+models/whisper-lora/
+third_party/ffmpeg/
+third_party/*.zip
+logs/stt*/
+models/base-whisper-small/
+models/align-korean/
+data/processed_audio_augmentation/
