@@ -96,12 +96,12 @@ completed
 
 | Method | Path | 역할 |
 |---|---|---|
-| GET | `/api/v1/health` | API 서버 상태 확인 |
-| GET | `/api/v1/model-status` | STT·분류 모델 준비 상태 확인 |
-| POST | `/api/v1/analyze` | 음성 분석 작업 생성 및 `job_id` 반환 |
-| GET | `/api/v1/analyze/{job_id}/status` | 현재 작업 상태와 단계 반환 |
-| GET | `/api/v1/analyze/{job_id}/result` | 완료된 분석 결과 반환 |
-| DELETE | `/api/v1/analyze/{job_id}` | 작업 취소와 결과 폐기 |
+| GET | `/api/health` | API 서버 상태 확인 |
+| GET | `/api/model-status` | STT·분류 모델 준비 상태 확인 |
+| POST | `/api/analyze` | 음성 분석 작업 생성 및 `job_id` 반환 |
+| GET | `/api/analyze/{job_id}/status` | 현재 작업 상태와 단계 반환 |
+| GET | `/api/analyze/{job_id}/result` | 완료된 분석 결과 반환 |
+| DELETE | `/api/analyze/{job_id}` | 작업 취소와 결과 폐기 |
 
 분석 업로드는 `multipart/form-data`의 `audio` 필드를 사용한다. 작업 상태는 `queued`, `running`, `completed`, `failed`, `cancelled`를 사용하고 처리 단계는 `queued`, `preprocessing`, `transcribing`, `classifying`, `finalizing`, `completed`, `failed`, `cancelled`를 사용한다.
 
