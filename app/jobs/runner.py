@@ -3,11 +3,12 @@ from app.jobs.registry import InvalidJobTransition, JobRegistry
 
 
 class JobRunner:
-    def __init__(self, registry: JobRegistry, analyzer: Analyzer):
+    def __init__(self, registry: JobRegistry, analyzer: Analyzer, cleanup=None):
         self.registry = registry
         self.analyzer = analyzer
+        self.cleanup = cleanup
 
-    async def run(self, job_id: str, audio: bytes) -> None:
+    async def run(self, job_id: str, audio: bytes, temp_path: str | None = None) -> None:
         try:
             self.registry.update(job_id, status="running", stage="preprocessing")
             result = await self.analyzer.analyze(audio)
@@ -35,3 +36,6 @@ class JobRunner:
                     "message": "분석 중 오류가 발생했습니다.",
                 },
             )
+        finally:
+            if self.cleanup is not None and temp_path is not None:
+                self.cleanup.delete(temp_path)

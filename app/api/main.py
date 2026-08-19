@@ -9,6 +9,7 @@ from app.api.request_id import RequestIdMiddleware
 from app.api.routes.analyze import router as analyze_router
 from app.api.routes.health import router as health_router
 from app.api.routes.jobs import router as jobs_router
+from app.jobs.cleanup import TempDataStore
 from app.jobs.registry import JobRegistry
 
 
@@ -24,6 +25,7 @@ def create_app() -> FastAPI:
     app = FastAPI(title="Voice Phishing Call Analysis API", version="0.1.0")
     app.state.job_registry = JobRegistry()
     app.state.analyzer = None
+    app.state.temp_data_store = TempDataStore()
     app.add_middleware(RequestIdMiddleware)
     app.add_exception_handler(RequestValidationError, request_validation_exception_handler)
     app.add_exception_handler(Exception, unhandled_exception_handler)
