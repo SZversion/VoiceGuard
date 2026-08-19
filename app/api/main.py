@@ -9,6 +9,7 @@ from app.api.request_id import RequestIdMiddleware
 from app.api.routes.analyze import router as analyze_router
 from app.api.routes.health import router as health_router
 from app.api.routes.jobs import router as jobs_router
+from app.core.request_controls import DuplicateJobLock, IpHasher, RateLimiter
 from app.jobs.cleanup import TempDataStore
 from app.jobs.registry import JobRegistry
 
@@ -26,6 +27,9 @@ def create_app() -> FastAPI:
     app.state.job_registry = JobRegistry()
     app.state.analyzer = None
     app.state.temp_data_store = TempDataStore()
+    app.state.ip_hasher = IpHasher(os.getenv("IP_HASH_SECRET", "development-only-secret"))
+    app.state.job_lock = DuplicateJobLock()
+    app.state.rate_limiter = RateLimiter(max_requests=10, window_seconds=60)
     app.add_middleware(RequestIdMiddleware)
     app.add_exception_handler(RequestValidationError, request_validation_exception_handler)
     app.add_exception_handler(Exception, unhandled_exception_handler)
