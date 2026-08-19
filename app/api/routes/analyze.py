@@ -32,6 +32,13 @@ async def create_analysis_job(request: Request, audio: UploadFile = File(...)):
     if analyzer is None:
         return error_response(request, "MODEL.NOT_READY", "분석 모델이 아직 준비되지 않았습니다.")
 
+    temp_path = request.app.state.temp_data_store.create(data)
     job = request.app.state.job_registry.create(owner_key=request.state.request_id)
-    asyncio.create_task(JobRunner(request.app.state.job_registry, analyzer).run(job.job_id, data))
+    asyncio.create_task(
+        JobRunner(request.app.state.job_registry, analyzer, request.app.state.temp_data_store).run(
+            job.job_id,
+            data,
+            temp_path,
+        )
+    )
     return JSONResponse(status_code=202, content={"job_id": job.job_id, "status": "queued"})
