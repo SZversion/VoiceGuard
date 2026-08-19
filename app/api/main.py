@@ -29,7 +29,10 @@ def create_app() -> FastAPI:
     app.state.temp_data_store = TempDataStore()
     app.state.ip_hasher = IpHasher(os.getenv("IP_HASH_SECRET", "development-only-secret"))
     app.state.job_lock = DuplicateJobLock()
-    app.state.rate_limiter = RateLimiter(max_requests=10, window_seconds=60)
+    app.state.rate_limiter = RateLimiter(
+        max_requests=int(os.getenv("RATE_LIMIT_MAX_REQUESTS", "10")),
+        window_seconds=float(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60")),
+    )
     app.add_middleware(RequestIdMiddleware)
     app.add_exception_handler(RequestValidationError, request_validation_exception_handler)
     app.add_exception_handler(Exception, unhandled_exception_handler)
