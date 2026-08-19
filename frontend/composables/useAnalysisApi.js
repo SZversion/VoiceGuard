@@ -1,4 +1,4 @@
-import { cancelMockAnalysis, createMockAnalysis, getMockAnalysisStatus } from '~/mocks/analysisMock'
+import { cancelMockAnalysis, createMockAnalysis, getMockAnalysisResult, getMockAnalysisStatus } from '~/mocks/analysisMock'
 
 export function useAnalysisApi() {
   const config = useRuntimeConfig()
@@ -29,11 +29,17 @@ export function useAnalysisApi() {
     })
   }
 
+  async function getAnalysisResult(jobId) {
+    if (config.public.useMock) return getMockAnalysisResult(jobId)
+    return $fetch(`/analyze/${encodeURIComponent(jobId)}/result`, { baseURL: config.public.apiBase })
+  }
+
   return {
     mode,
     apiBase: computed(() => String(config.public.apiBase)),
     createAnalysis,
     getAnalysisStatus,
-    cancelAnalysis
+    cancelAnalysis,
+    getAnalysisResult
   }
 }

@@ -121,3 +121,38 @@ export async function cancelMockAnalysis(jobId) {
   job.status = 'cancelled'
   return toResponse(job)
 }
+
+export async function getMockAnalysisResult(jobId) {
+  await wait(220)
+  const job = jobs.get(jobId)
+  if (!job) throw new Error('분석 작업을 찾을 수 없습니다.')
+
+  const status = toResponse(job).status
+  if (status !== 'completed') throw new Error('분석이 아직 완료되지 않았습니다.')
+
+  return {
+    job_id: jobId,
+    status: 'completed',
+    result: {
+      label: '보이스피싱 의심',
+      score: 91,
+      risk_level: 5,
+      risk_level_label: '매우 높음',
+      summary: {
+        title: '보이스피싱 의심',
+        description: '분석된 통화 내용에서 보이스피싱으로 판단되는 발언과 패턴이 다수 탐지되었습니다.'
+      },
+      segments: [
+        { start_time: '00:01:24', text: '저는 서울중앙지검 수사관 김○○입니다.', reason: '수사기관 사칭 표현' },
+        { start_time: '00:02:47', text: '지금 고객님 명의가 범죄에 연루되어 있습니다.', reason: '범죄 연루로 불안 조성' },
+        { start_time: '00:04:15', text: '안전을 위해 계좌에 있는 돈을 확인해야 합니다.', reason: '자금 이체 유도 의심' }
+      ],
+      advice: [
+        '어떤 이유로도 현금 이체나 계좌이체를 하지 마세요.',
+        '의심되는 경우 말을 잇지 말고 즉시 전화를 끊으세요.',
+        '공식 기관의 대표번호로 직접 연락해 사실 여부를 확인하세요.'
+      ],
+      disclaimer: 'AI 분석 결과는 법적 확정 판정이 아니며 참고용으로 활용해 주세요.'
+    }
+  }
+}
