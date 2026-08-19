@@ -19,6 +19,9 @@ ERROR_DEFINITIONS = {
     "AUDIO.EMPTY": ErrorDefinition(400, "upload_validation", False),
     "AUDIO.INVALID_FORMAT": ErrorDefinition(400, "upload_validation", False),
     "MODEL.NOT_READY": ErrorDefinition(503, "model_loading", True),
+    "JOB.NOT_FOUND": ErrorDefinition(404, "job_lookup", False),
+    "JOB.NOT_COMPLETED": ErrorDefinition(409, "job_lookup", False),
+    "JOB.CANNOT_CANCEL": ErrorDefinition(409, "job_cancel", False),
     "INTERNAL.ERROR": ErrorDefinition(500, "server", True),
 }
 
