@@ -1,10 +1,24 @@
+import { createMockAnalysis } from '~/mocks/analysisMock'
+
 export function useAnalysisApi() {
   const config = useRuntimeConfig()
   const mode = computed(() => (config.public.useMock ? 'mock' : 'api'))
 
+  async function createAnalysis(file) {
+    if (config.public.useMock) return createMockAnalysis(file)
+
+    const formData = new FormData()
+    formData.append('audio', file)
+    return $fetch('/analyze', {
+      method: 'POST',
+      baseURL: config.public.apiBase,
+      body: formData
+    })
+  }
+
   return {
     mode,
-    apiBase: computed(() => String(config.public.apiBase))
-    // API 호출은 2단계에서 Mock 계약과 함께 추가한다.
+    apiBase: computed(() => String(config.public.apiBase)),
+    createAnalysis
   }
 }
