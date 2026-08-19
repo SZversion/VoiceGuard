@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  font-family: Inter, Pretendard, 'Noto Sans KR', sans-serif;
+  background: #f8fafc;
+  color: #172033;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  background: #f8fafc;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
