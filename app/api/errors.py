@@ -18,12 +18,17 @@ ERROR_DEFINITIONS = {
     "AUDIO.UNSUPPORTED_FORMAT": ErrorDefinition(400, "upload_validation", False),
     "AUDIO.EMPTY": ErrorDefinition(400, "upload_validation", False),
     "AUDIO.INVALID_FORMAT": ErrorDefinition(400, "upload_validation", False),
+    "SERVICE.RATE_LIMITED": ErrorDefinition(429, "request_validation", True),
     "MODEL.NOT_READY": ErrorDefinition(503, "model_loading", True),
+    "JOB.NOT_FOUND": ErrorDefinition(404, "job_lookup", False),
+    "JOB.DUPLICATE": ErrorDefinition(409, "job_lookup", False),
+    "JOB.NOT_COMPLETED": ErrorDefinition(409, "job_lookup", False),
+    "JOB.CANNOT_CANCEL": ErrorDefinition(409, "job_cancel", False),
     "INTERNAL.ERROR": ErrorDefinition(500, "server", True),
 }
 
 
-def error_response(request: Request, error_code: str, message: str) -> JSONResponse:
+def error_response(request: Request, error_code: str, message: str):
     definition = ERROR_DEFINITIONS[error_code]
     payload = ErrorResponse(
         request_id=request.state.request_id,
