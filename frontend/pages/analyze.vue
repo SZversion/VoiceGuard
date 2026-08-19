@@ -91,6 +91,11 @@ async function loadStatus() {
     const response = await getAnalysisStatus(jobId.value)
     analysis.value = response
     errorMessage.value = ''
+    if (response.status === 'completed') {
+      stopPolling()
+      await router.replace({ path: '/result', query: { job_id: jobId.value } })
+      return
+    }
     if (terminalStatuses.includes(response.status)) stopPolling()
   } catch {
     errorMessage.value = '분석 진행 상태를 확인하지 못했습니다. 잠시 후 다시 시도해주세요.'
@@ -121,10 +126,6 @@ async function handleCancel() {
 
 function goToUpload() {
   router.push('/')
-}
-
-function goToResult() {
-  router.push({ path: '/result', query: { job_id: jobId.value } })
 }
 
 onMounted(async () => {
@@ -213,6 +214,7 @@ onBeforeUnmount(stopPolling)
       </section>
 
       <section
+        v-if="status !== 'completed'"
         class="flex flex-col gap-3 rounded-xl border p-5 sm:flex-row sm:items-center sm:justify-between"
         :class="status === 'failed' ? 'border-red-200 bg-red-50' : status === 'cancelled' ? 'border-amber-200 bg-amber-50' : status === 'completed' ? 'border-emerald-200 bg-emerald-50' : 'border-blue-100 bg-blue-50'"
       >
@@ -227,8 +229,7 @@ onBeforeUnmount(stopPolling)
           </div>
         </div>
         <div class="flex shrink-0 gap-2">
-          <button v-if="status === 'completed'" type="button" class="bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700" @click="goToResult">분석 결과 보기</button>
-          <button v-else-if="status === 'failed' || status === 'cancelled'" type="button" class="border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50" @click="goToUpload">다시 분석하기</button>
+          <button v-if="status === 'failed' || status === 'cancelled'" type="button" class="border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50" @click="goToUpload">다시 분석하기</button>
           <button v-else type="button" class="border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60" :disabled="isCancelling" @click="handleCancel">
             {{ isCancelling ? '취소 중...' : '분석 취소' }}
           </button>
