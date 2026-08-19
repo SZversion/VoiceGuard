@@ -1,0 +1,106 @@
+{
+  "data_dir": "C:\\Users\\SZ\\Documents\\his_voice\\stt_finetuning_cleaned_v3",
+  "manifest_rows": 590,
+  "actual_wav_files": 590,
+  "actual_txt_files": 590,
+  "txt_beep_marker_files": 14,
+  "decoded_wav_files": 590,
+  "decode_errors": [],
+  "groups": {
+    "D03": 461,
+    "voice_phishing": 129
+  },
+  "manifest_aligned_counts": {
+    "True": 590
+  },
+  "manifest_duration_s": {
+    "n": 590,
+    "min": 2.490875,
+    "p05": 6.942818750000001,
+    "median": 23.47540625,
+    "p95": 29.06020625,
+    "max": 29.990125,
+    "mean": 22.06939269067797,
+    "std": 6.356729649534665
+  },
+  "actual_duration_s": {
+    "n": 590,
+    "min": 2.490875,
+    "p05": 6.942818750000001,
+    "median": 23.47540625,
+    "p95": 29.06020625,
+    "max": 29.990125,
+    "mean": 22.06939269067797,
+    "std": 6.356729649534665
+  },
+  "manifest_actual_duration_diff_ms": {
+    "n": 590,
+    "min": 0.0,
+    "p05": 0.0,
+    "median": 0.0,
+    "p95": 0.0,
+    "max": 0.0,
+    "mean": 0.0,
+    "std": 0.0
+  },
+  "chunk_duration_bins": {
+    "20-30s": 479,
+    "<20s": 111
+  },
+  "source_paths_missing": 590,
+  "source_paths_unknown": 0,
+  "unique_chunk_bases": 229,
+  "chunk_count_distribution": {
+    "2": 27,
+    "12": 1,
+    "4": 8,
+    "6": 10,
+    "3": 22,
+    "7": 6,
+    "9": 2,
+    "8": 5,
+    "15": 1,
+    "18": 2,
+    "5": 8,
+    "10": 2,
+    "11": 2,
+    "1": 133
+  },
+  "manifest_names_missing_on_disk": 0,
+  "actual_names_missing_in_manifest": 0,
+  "duplicate_basenames": [],
+  "sample_rate_counts": {
+    "8000": 461,
+    "16000": 129
+  },
+  "channel_counts": {
+    "1": 590
+  },
+  "rms_dbfs": {
+    "n": 590,
+    "min": -25.997769269270773,
+    "p05": -25.497172572440284,
+    "median": -19.761352973424753,
+    "p95": -15.080145873024337,
+    "max": -14.157380590154226,
+    "mean": -19.949959864066297,
+    "std": 3.2616674385012794
+  },
+  "peak_dbfs": {
+    "n": 590,
+    "min": -14.497666196272828,
+    "p05": -6.4860212592299185,
+    "median": 0.0,
+    "p95": 0.0,
+    "max": 0.0,
+    "mean": -1.1646922468776326,
+    "std": 2.292626551237302
+  },
+  "clipping_files": 393,
+  "candidate_beep_files": 0,
+  "candidate_noise_files": 0,
+  "notes": [
+    "Speed augmentation, gain amount, and normalization cannot be proven without original audio or augmentation metadata.",
+    "Beep/noise candidate counts are heuristic signal-screening results, not proof of intentional augmentation."
+  ]
+}

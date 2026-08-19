@@ -1,5 +1,6 @@
 # CPU STT runtime
 faster-whisper
+av
 
 # Whisper LoRA fine-tuning and evaluation
 transformers

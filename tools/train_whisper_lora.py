@@ -45,7 +45,13 @@ def build_lora_config(lora: dict[str, Any]):
     )
 
 
-def build_whisper_model(model_name: str, lora: dict[str, Any], language: str = "ko", task: str = "transcribe"):
+def build_whisper_model(
+    model_name: str,
+    lora: dict[str, Any],
+    language: str = "ko",
+    task: str = "transcribe",
+    freeze_encoder: bool = False,
+):
     try:
         from peft import get_peft_model
         from transformers import WhisperForConditionalGeneration, WhisperProcessor
@@ -59,6 +65,10 @@ def build_whisper_model(model_name: str, lora: dict[str, Any], language: str = "
     model.generation_config.forced_decoder_ids = None
     model.config.use_cache = False
     model = get_peft_model(model, build_lora_config(lora))
+    if freeze_encoder:
+        for name, parameter in model.named_parameters():
+            if ".encoder." in name or name.startswith("encoder."):
+                parameter.requires_grad = False
     model.print_trainable_parameters()
     return model, processor
 
@@ -205,7 +215,13 @@ def train(args: argparse.Namespace) -> int:
         raise ValueError("--fp16 requires CUDA")
 
     Seq2SeqTrainer, _ = _load_training_dependencies()
-    model, processor = build_whisper_model(model_name, config["lora"], config["language"], config["task"])
+    model, processor = build_whisper_model(
+        model_name,
+        config["lora"],
+        config["language"],
+        config["task"],
+        freeze_encoder=bool(config["training"].get("freeze_encoder", False)),
+    )
     datasets = {split: WhisperPairDataset(pairs, processor) for split, pairs in splits.items()}
 
     training_args = _build_training_arguments(config["training"], args.output, fp16)
