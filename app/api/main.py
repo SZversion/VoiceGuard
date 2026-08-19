@@ -23,6 +23,7 @@ def _allowed_origins() -> list[str]:
 def create_app() -> FastAPI:
     app = FastAPI(title="Voice Phishing Call Analysis API", version="0.1.0")
     app.state.job_registry = JobRegistry()
+    app.state.analyzer = None
     app.add_middleware(RequestIdMiddleware)
     app.add_exception_handler(RequestValidationError, request_validation_exception_handler)
     app.add_exception_handler(Exception, unhandled_exception_handler)
