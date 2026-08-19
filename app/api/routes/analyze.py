@@ -1,8 +1,12 @@
+import asyncio
+
 from fastapi import APIRouter, File, Request, UploadFile
+from fastapi.responses import JSONResponse
 
 from app.analysis.audio import AudioValidationError, validate_audio
 from app.api.errors import error_response
 from app.api.schemas import ErrorResponse
+from app.jobs.runner import JobRunner
 
 
 router = APIRouter(tags=["analysis"])
@@ -17,10 +21,17 @@ router = APIRouter(tags=["analysis"])
         503: {"model": ErrorResponse, "description": "Analysis model is not ready"},
     },
 )
-async def analyze(request: Request, audio: UploadFile = File(...)):
+async def create_analysis_job(request: Request, audio: UploadFile = File(...)):
     data = await audio.read()
     try:
         validate_audio(audio.filename, audio.content_type, data)
     except AudioValidationError as exc:
         return error_response(request, exc.error_code, exc.message)
-    return error_response(request, "MODEL.NOT_READY", "분석 모델이 아직 준비되지 않았습니다.")
+
+    analyzer = request.app.state.analyzer
+    if analyzer is None:
+        return error_response(request, "MODEL.NOT_READY", "분석 모델이 아직 준비되지 않았습니다.")
+
+    job = request.app.state.job_registry.create(owner_key=request.state.request_id)
+    asyncio.create_task(JobRunner(request.app.state.job_registry, analyzer).run(job.job_id, data))
+    return JSONResponse(status_code=202, content={"job_id": job.job_id, "status": "queued"})
