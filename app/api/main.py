@@ -1,10 +1,17 @@
 import os
 
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes.health import router as health_router
+from app.api.exception_handlers import (
+    request_validation_exception_handler,
+    unhandled_exception_handler,
+)
+from app.api.request_id import RequestIdMiddleware
 from app.api.routes.analyze import router as analyze_router
+from app.api.routes.health import router as health_router
+
 
 def _allowed_origins() -> list[str]:
     origins = ["http://localhost:3000"]
@@ -15,10 +22,10 @@ def _allowed_origins() -> list[str]:
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(
-        title="Voice Phishing Call Analysis API",
-        version="0.1.0",
-    )
+    app = FastAPI(title="Voice Phishing Call Analysis API", version="0.1.0")
+    app.add_middleware(RequestIdMiddleware)
+    app.add_exception_handler(RequestValidationError, request_validation_exception_handler)
+    app.add_exception_handler(Exception, unhandled_exception_handler)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=_allowed_origins(),
