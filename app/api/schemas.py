@@ -7,6 +7,8 @@ ErrorStage = Literal[
     "request_validation",
     "upload_validation",
     "model_loading",
+    "job_lookup",
+    "job_cancel",
     "server",
 ]
 
