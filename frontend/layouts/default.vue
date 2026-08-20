@@ -1,6 +1,7 @@
 <script setup>
 import {
   ArrowUpTrayIcon,
+  ArrowUpIcon,
   ChartBarIcon,
   ChartBarSquareIcon,
   QuestionMarkCircleIcon,
@@ -16,6 +17,10 @@ const navigation = [
   { label: '개인정보 보호 안내', to: '/privacy', icon: ShieldCheckIcon },
   { label: '도움말', to: '/help', icon: QuestionMarkCircleIcon },
 ]
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 </script>
 
 <template>
@@ -42,9 +47,19 @@ const navigation = [
     </aside>
 
     <main class="min-h-screen w-full lg:ml-72">
-      <div class="mx-auto max-w-6xl px-5 py-6 sm:px-8 sm:py-10">
+      <div class="mx-auto max-w-6xl px-5 pb-[100px] pt-6 sm:px-8 sm:py-10">
         <slot />
       </div>
     </main>
+
+    <button
+      type="button"
+      class="fixed bottom-5 right-5 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 lg:hidden"
+      aria-label="페이지 맨 위로 이동"
+      title="맨 위로 이동"
+      @click="scrollToTop"
+    >
+      <ArrowUpIcon class="h-5 w-5" aria-hidden="true" />
+    </button>
   </div>
 </template>
