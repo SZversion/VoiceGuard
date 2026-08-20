@@ -41,12 +41,12 @@ const processSteps = [
         </span>
 
         <div class="min-w-0 flex-1">
-          <h2 class="text-2xl font-extrabold text-slate-900">핵심 보호 원칙</h2>
-          <ul class="mt-5 divide-y divide-slate-100">
+          <h2 class="text-2xl font-extrabold text-slate-900 max-[639px]:mt-4">핵심 보호 원칙</h2>
+          <ul class="mt-5 divide-y divide-slate-100 max-[639px]:-ml-[84px] max-[639px]:w-[calc(100%+84px)]">
             <li
               v-for="principle in principles"
               :key="principle"
-              class="flex min-h-[54px] items-center gap-4 py-3 text-[16px] font-semibold text-slate-700"
+              class="flex min-h-[54px] items-center justify-start gap-4 py-3 text-left text-[16px] font-semibold text-slate-700 max-[639px]:pl-8"
             >
               <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
                 <CheckIcon class="h-3 w-3" stroke-width="3" aria-hidden="true" />
@@ -64,8 +64,8 @@ const processSteps = [
           <ArrowPathIcon class="h-10 w-10" aria-hidden="true" />
         </span>
         <div class="w-full">
-          <h2 class="text-2xl font-extrabold text-slate-900">처리 과정</h2>
-          <ol class="relative mt-8 grid grid-cols-5 gap-3 before:absolute before:left-[8%] before:right-[8%] before:top-5 before:border-t-2 before:border-dashed before:border-blue-300 max-[640px]:grid-cols-1 max-[640px]:gap-7 max-[640px]:before:hidden">
+          <h2 class="text-2xl font-extrabold text-slate-900 max-[639px]:mt-4">처리 과정</h2>
+          <ol class="relative mt-8 grid grid-cols-5 gap-3 before:absolute before:left-[8%] before:right-[8%] before:top-5 before:border-t-2 before:border-dashed before:border-blue-300 max-[640px]:-ml-[84px] max-[640px]:w-[calc(100%+84px)] max-[640px]:grid-cols-1 max-[640px]:gap-7 max-[640px]:before:hidden">
             <li v-for="step in processSteps" :key="step.number" class="relative z-10 min-w-0 text-center">
               <span class="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">{{ step.number }}</span>
               <p class="mt-3 font-bold text-slate-800">{{ step.title }}</p>
@@ -80,7 +80,7 @@ const processSteps = [
       <div class="flex items-start gap-4">
         <ExclamationTriangleIcon class="h-9 w-9 shrink-0 text-amber-600" aria-hidden="true" />
         <div>
-          <h2 class="text-xl font-extrabold text-slate-900">꼭 알아두세요</h2>
+          <h2 class="text-xl font-extrabold text-slate-900 max-[639px]:mt-1">꼭 알아두세요</h2>
           <p class="mt-3 leading-7 text-slate-700">이 서비스는 AI 기반 분석을 제공하며, 법적 판단을 대체하지 않습니다.</p>
           <p class="text-slate-700">최종 판단과 책임은 사용자 본인에게 있습니다.</p>
         </div>
@@ -96,10 +96,10 @@ const processSteps = [
         </p>
       </div>
 
-      <div class="flex flex-wrap gap-4">
+      <div class="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:gap-4">
         <a
           href="tel:112"
-          class="flex min-w-[150px] items-center gap-3 border border-slate-200 bg-white px-5 py-3 shadow-sm transition hover:border-blue-300"
+          class="flex min-w-[150px] items-center gap-3 border border-slate-200 bg-white px-5 py-3 shadow-sm transition hover:border-blue-300 max-[639px]:min-w-0 max-[639px]:px-3"
         >
           <SolidPhoneIcon class="h-8 w-8 text-blue-600" aria-hidden="true" />
           <span>
@@ -110,7 +110,7 @@ const processSteps = [
 
         <a
           href="tel:1332"
-          class="flex min-w-[150px] items-center gap-3 border border-slate-200 bg-white px-5 py-3 shadow-sm transition hover:border-blue-300"
+          class="flex min-w-[150px] items-center gap-3 border border-slate-200 bg-white px-5 py-3 shadow-sm transition hover:border-blue-300 max-[639px]:min-w-0 max-[639px]:px-3"
         >
           <SolidShieldCheckIcon class="h-8 w-8 text-blue-600" aria-hidden="true" />
           <span>
