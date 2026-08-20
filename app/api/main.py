@@ -12,6 +12,7 @@ from app.api.routes.jobs import router as jobs_router
 from app.core.request_controls import DuplicateJobLock, IpHasher, RateLimiter
 from app.jobs.cleanup import TempDataStore
 from app.jobs.registry import JobRegistry
+from app.jobs.task_registry import JobTaskRegistry
 
 
 def _allowed_origins() -> list[str]:
@@ -33,6 +34,7 @@ def create_app() -> FastAPI:
         max_requests=int(os.getenv("RATE_LIMIT_MAX_REQUESTS", "10")),
         window_seconds=float(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60")),
     )
+    app.state.task_registry = JobTaskRegistry()
     app.add_middleware(RequestIdMiddleware)
     app.add_exception_handler(RequestValidationError, request_validation_exception_handler)
     app.add_exception_handler(Exception, unhandled_exception_handler)

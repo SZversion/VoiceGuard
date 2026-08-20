@@ -44,13 +44,15 @@ async def create_analysis_job(request: Request, audio: UploadFile = File(...)):
     temp_path = request.app.state.temp_data_store.create(data)
     job = request.app.state.job_registry.create(owner_key=owner_key)
     request.app.state.job_lock.acquire(owner_key, job.job_id)
-    asyncio.create_task(
+    task = asyncio.create_task(
         JobRunner(
             request.app.state.job_registry,
             analyzer,
             request.app.state.temp_data_store,
             request.app.state.job_lock,
             owner_key,
+            request.app.state.task_registry,
         ).run(job.job_id, data, temp_path)
     )
+    request.app.state.task_registry.register(job.job_id, task)
     return JSONResponse(status_code=202, content={"job_id": job.job_id, "status": "queued"})
