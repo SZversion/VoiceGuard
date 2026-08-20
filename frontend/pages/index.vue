@@ -18,6 +18,11 @@ function showFileError(message) {
   errorMessage.value = message
 }
 
+function removeFile() {
+  selectedFile.value = null
+  errorMessage.value = ''
+}
+
 async function startAnalysis() {
   if (!canStart.value) return
 
@@ -47,7 +52,7 @@ async function startAnalysis() {
     <div class="mx-auto mt-10 max-w-3xl space-y-5">
       <ConsentNotice />
       <AudioUploader @selected="selectFile" @error="showFileError" />
-      <FileInfo :file="selectedFile" />
+      <FileInfo :file="selectedFile" @remove="removeFile" />
 
       <p v-if="errorMessage" class="rounded-md bg-red-50 px-4 py-3 text-sm font-semibold text-red-700" role="alert">
         {{ errorMessage }}
