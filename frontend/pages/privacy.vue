@@ -65,7 +65,7 @@ const processSteps = [
         </span>
         <div class="w-full">
           <h2 class="text-2xl font-extrabold text-slate-900">처리 과정</h2>
-          <ol class="relative mt-8 grid grid-cols-5 gap-3 before:absolute before:left-[8%] before:right-[8%] before:top-5 before:border-t-2 before:border-dashed before:border-blue-300 max-[480px]:grid-cols-1 max-[480px]:gap-6 max-[480px]:before:hidden">
+          <ol class="relative mt-8 grid grid-cols-5 gap-3 before:absolute before:left-[8%] before:right-[8%] before:top-5 before:border-t-2 before:border-dashed before:border-blue-300 max-[640px]:grid-cols-1 max-[640px]:gap-7 max-[640px]:before:hidden">
             <li v-for="step in processSteps" :key="step.number" class="relative z-10 min-w-0 text-center">
               <span class="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">{{ step.number }}</span>
               <p class="mt-3 font-bold text-slate-800">{{ step.title }}</p>

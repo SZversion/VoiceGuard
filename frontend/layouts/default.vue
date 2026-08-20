@@ -20,23 +20,23 @@ const navigation = [
 
 <template>
   <div class="min-h-screen bg-slate-50 lg:flex">
-    <aside class="w-full bg-brand-900 text-white lg:fixed lg:inset-y-0 lg:flex lg:w-72 lg:flex-col">
+    <aside class="mb-8 w-full bg-brand-900 text-white lg:mb-0 lg:fixed lg:inset-y-0 lg:flex lg:w-72 lg:flex-col">
       <div class="px-6 py-12 lg:px-7">
         <NuxtLink to="/" class="block text-3xl font-bold leading-tight tracking-tight">
           보이스피싱<br />통화 분석 MVP
         </NuxtLink>
       </div>
 
-      <nav class="flex gap-2 overflow-x-auto px-4 pb-4 lg:block lg:space-y-2 lg:px-4">
+      <nav class="grid grid-cols-2 gap-2 overflow-visible px-5 pb-4 sm:grid-cols-3 sm:px-6 lg:block lg:space-y-2 lg:px-4">
         <NuxtLink
           v-for="item in navigation"
           :key="item.to"
           :to="item.to"
-          class="flex min-w-max items-center gap-3 rounded-md px-4 py-3 text-base font-semibold transition"
+          class="flex min-w-0 items-center justify-start gap-2 rounded-md px-2 py-2 text-left text-xs font-semibold leading-tight transition sm:gap-2 sm:px-3 sm:py-2.5 sm:text-sm lg:min-w-max lg:gap-3 lg:px-4 lg:py-3 lg:text-base lg:text-left"
           :class="route.path === item.to ? 'bg-blue-600 text-white' : 'text-slate-200 hover:bg-white/10'"
         >
-          <component :is="item.icon" class="h-6 w-6 shrink-0" aria-hidden="true" />
-          <span>{{ item.label }}</span>
+          <component :is="item.icon" class="h-5 w-5 shrink-0 sm:h-5 sm:w-5 lg:h-6 lg:w-6" aria-hidden="true" />
+          <span class="min-w-0">{{ item.label }}</span>
         </NuxtLink>
       </nav>
     </aside>

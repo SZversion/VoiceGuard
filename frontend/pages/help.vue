@@ -105,7 +105,7 @@ const questions = [
       </section>
     </div>
 
-    <section class="flex flex-col gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-8">
+    <section class="flex flex-col gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:flex-row md:items-center md:justify-between md:p-8">
       <div class="flex items-center gap-4">
         <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
           <ChatBubbleLeftEllipsisIcon class="h-11 w-11" aria-hidden="true" />
@@ -116,20 +116,22 @@ const questions = [
         </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-4">
-        <a href="tel:112" class="flex items-center gap-2 text-blue-700" aria-label="경찰청 112 전화하기">
-          <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-50">
-            <SolidPhoneIcon class="h-6 w-6" aria-hidden="true" />
-          </span>
-          <span><span class="block text-xs text-slate-500">경찰청</span><strong class="text-xl">112</strong></span>
-        </a>
-        <a href="tel:1332" class="flex items-center gap-2 text-blue-700 px-8" aria-label="금융감독원 1332 전화하기">
-          <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-50">
-            <SolidShieldCheckIcon class="h-6 w-6" aria-hidden="true" />
-          </span>
-          <span><span class="block text-xs text-slate-500">금융감독원</span><strong class="text-xl">1332</strong></span>
-        </a>
-        <NuxtLink to="/" class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-3 font-bold text-white transition hover:bg-blue-700">
+      <div class="flex w-full flex-col items-center gap-4 md:w-auto md:items-center">
+        <div class="flex items-center gap-4">
+          <a href="tel:112" class="flex items-center gap-2 text-blue-700" aria-label="경찰청 112 전화하기">
+            <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-50">
+              <SolidPhoneIcon class="h-6 w-6" aria-hidden="true" />
+            </span>
+            <span><span class="block text-xs text-slate-500">경찰청</span><strong class="text-xl">112</strong></span>
+          </a>
+          <a href="tel:1332" class="flex items-center gap-2 text-blue-700 px-8" aria-label="금융감독원 1332 전화하기">
+            <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-50">
+              <SolidShieldCheckIcon class="h-6 w-6" aria-hidden="true" />
+            </span>
+            <span><span class="block text-xs text-slate-500">금융감독원</span><strong class="text-xl">1332</strong></span>
+          </a>
+        </div>
+        <NuxtLink to="/" class="mt-2 inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-3 font-bold text-white transition hover:bg-blue-700 md:mt-0">
           <CloudArrowUpIcon class="h-5 w-5" aria-hidden="true" />
           통화 업로드로 이동
         </NuxtLink>
