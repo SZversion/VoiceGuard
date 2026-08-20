@@ -3,12 +3,21 @@ from app.jobs.registry import InvalidJobTransition, JobRegistry
 
 
 class JobRunner:
-    def __init__(self, registry: JobRegistry, analyzer: Analyzer, cleanup=None, job_lock=None, owner_key=None):
+    def __init__(
+        self,
+        registry: JobRegistry,
+        analyzer: Analyzer,
+        cleanup=None,
+        job_lock=None,
+        owner_key=None,
+        task_registry=None,
+    ):
         self.registry = registry
         self.analyzer = analyzer
         self.cleanup = cleanup
         self.job_lock = job_lock
         self.owner_key = owner_key
+        self.task_registry = task_registry
 
     async def run(self, job_id: str, audio: bytes, temp_path: str | None = None) -> None:
         try:
@@ -43,3 +52,5 @@ class JobRunner:
                 self.cleanup.delete(temp_path)
             if self.job_lock is not None and self.owner_key is not None:
                 self.job_lock.release(self.owner_key, job_id)
+            if self.task_registry is not None:
+                self.task_registry.remove(job_id)

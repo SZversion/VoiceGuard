@@ -38,4 +38,5 @@ def cancel_job(request: Request, job_id: str):
         return error
     if not request.app.state.job_registry.cancel(job_id):
         return error_response(request, "JOB.CANNOT_CANCEL", "완료되었거나 종료된 작업은 취소할 수 없습니다.")
+    request.app.state.task_registry.cancel(job_id)
     return {"job_id": job.job_id, "status": job.status}
