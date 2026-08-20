@@ -300,7 +300,30 @@ Nuxt.js 결과 화면
 
 ## Installation & Usage
 
+### 음성 STT·화자 분리 라벨 생성
+
+`data/raw/impersonation`과 `data/raw/loanScam`의 음성을 Faster-Whisper로 전사하려면 [CPU STT 실행 가이드](docs/faster-whisper-stt.md)를 참고합니다.
+
 > 실제 소스 코드 구조와 의존성이 확정된 후 업데이트합니다.
+
+### CPU STT 실행
+
+```powershell
+& "E:\Program Files\whisperx-env\Scripts\python.exe" -m tools.faster_whisper_stt `
+  --input data/raw `
+  --output data/processed_stt `
+  --language ko `
+  --model small `
+  --device cpu `
+  --compute-type int8 `
+  --limit 2
+```
+
+정확도가 부족한 파일만 `--model medium`으로 재처리합니다. 화자 분리는 수행하지 않으며, 결과는 LLM 파인튜닝용 `transcript.txt`와 `segments.jsonl`로 저장합니다.
+
+### Whisper LoRA 파인튜닝
+
+같은 폴더의 음성·정답 TXT 쌍으로 Whisper-small을 LoRA 파인튜닝하려면 [Whisper LoRA 실행 가이드](docs/whisper-lora-finetuning.md)를 참고합니다. 먼저 `--dry-run`으로 데이터 쌍과 분할을 확인한 뒤 CUDA 환경에서 학습을 실행합니다.
 
 ### 예정 실행 방법
 

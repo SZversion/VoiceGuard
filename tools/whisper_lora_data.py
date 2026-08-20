@@ -8,6 +8,8 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from tools.transcript_cleaning import clean_training_text
+
 
 @dataclass(frozen=True)
 class AudioTextPair:
@@ -26,6 +28,9 @@ def source_group_identifier(pair: AudioTextPair) -> str:
     if "__chunk_" in stem:
         return stem.split("__chunk_", 1)[0]
     match = re.match(r"^(PHISH_\d+)_\d{4}$", stem, re.IGNORECASE)
+    if match:
+        return match.group(1)
+    match = re.match(r"^(.+?)__\d{4}$", stem)
     if match:
         return match.group(1)
     return stem
@@ -52,10 +57,18 @@ class SplitRatios:
             raise ValueError("split ratios must sum to 1.0")
 
 
-def discover_pairs(root: Path, extensions: tuple[str, ...]) -> tuple[list[AudioTextPair], list[DataIssue]]:
+def discover_pairs(
+    root: Path,
+    extensions: tuple[str, ...],
+    *,
+    clean_transcripts: bool = False,
+    min_transcript_chars: int = 1,
+) -> tuple[list[AudioTextPair], list[DataIssue]]:
     """Find valid sibling audio/TXT pairs and report invalid audio files."""
     if not root.exists() or not root.is_dir():
         raise FileNotFoundError(f"Dataset directory does not exist: {root}")
+    if min_transcript_chars < 1:
+        raise ValueError("min_transcript_chars must be at least 1")
 
     normalized_extensions = {extension.lower() for extension in extensions}
     pairs: list[AudioTextPair] = []
@@ -91,6 +104,18 @@ def discover_pairs(root: Path, extensions: tuple[str, ...]) -> tuple[list[AudioT
 
         if not transcript:
             issues.append(DataIssue("empty_text", text, "TXT transcript is empty"))
+            continue
+
+        if clean_transcripts:
+            transcript = clean_training_text(transcript)
+        if len(transcript) < min_transcript_chars:
+            issues.append(
+                DataIssue(
+                    "short_text",
+                    text,
+                    f"Transcript has {len(transcript)} characters; minimum is {min_transcript_chars}",
+                )
+            )
             continue
 
         seen_identifiers.add(identifier)

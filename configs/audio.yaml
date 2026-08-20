@@ -1,1 +1,11 @@
-# 오디오 전처리 설정을 기록합니다.
+supported_extensions:
+  - .mp3
+  - .wav
+  - .m4a
+  - .flac
+stt_model: small
+stt_language: ko
+stt_device: cpu
+stt_compute_type: int8
+stt_vad_filter: true
+stt_word_timestamps: false

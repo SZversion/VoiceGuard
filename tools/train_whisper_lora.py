@@ -150,7 +150,12 @@ def _build_training_arguments(training: dict[str, Any], output: Path, fp16: bool
 
 def _prepare_manifest(data_root: Path, output: Path, config: dict[str, Any], seed: int) -> tuple[dict[str, list], list]:
     extensions = tuple(config["data"]["extensions"])
-    pairs, issues = discover_pairs(data_root, extensions)
+    pairs, issues = discover_pairs(
+        data_root,
+        extensions,
+        clean_transcripts=bool(config["data"].get("clean_transcripts", False)),
+        min_transcript_chars=int(config["data"].get("min_transcript_chars", 1)),
+    )
     if len(pairs) < 3:
         raise ValueError(f"At least 3 valid audio/TXT pairs are required; found {len(pairs)}")
     ratios = SplitRatios(
