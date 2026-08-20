@@ -79,6 +79,26 @@ class WhisperLoraDataTests(unittest.TestCase):
         self.assertEqual(source_group_identifier(d03), "D03_J13_S000001_merged")
         self.assertEqual(source_group_identifier(phish), "PHISH_001")
 
+    def test_source_group_identifier_collapses_run002_call_chunks(self):
+        pair = AudioTextPair(Path("E:/dataset/S000001__0196.wav"), Path("E:/dataset/S000001__0196.txt"), "a")
+
+        self.assertEqual(source_group_identifier(pair), "S000001")
+
+    def test_discover_pairs_can_clean_and_filter_transcripts(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "sample.wav").write_bytes(b"audio")
+            (root / "sample.txt").write_text("o/ (()) 안녕하세요", encoding="utf-8")
+
+            pairs, issues = discover_pairs(root, (".wav",), clean_transcripts=True, min_transcript_chars=10)
+
+            self.assertEqual(pairs, [])
+            self.assertEqual(issues[0].code, "short_text")
+
+            pairs, issues = discover_pairs(root, (".wav",), clean_transcripts=True, min_transcript_chars=1)
+            self.assertEqual(pairs[0].transcript, "안녕하세요")
+            self.assertEqual(issues, [])
+
     def test_grouped_split_keeps_all_chunks_from_source_together(self):
         root = Path("E:/dataset")
         pairs = []

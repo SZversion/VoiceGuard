@@ -44,7 +44,9 @@ def write_inference_result(
     return output
 
 
-def load_whisper_lora_checkpoint(checkpoint: Path, device: str = "cuda"):
+def load_whisper_lora_checkpoint(
+    checkpoint: Path, device: str = "cuda", base_model: Path | str | None = None
+):
     try:
         import torch
         from peft import PeftConfig, PeftModel
@@ -57,8 +59,24 @@ def load_whisper_lora_checkpoint(checkpoint: Path, device: str = "cuda"):
 
     peft_config = PeftConfig.from_pretrained(checkpoint)
     processor = WhisperProcessor.from_pretrained(checkpoint)
-    base_model = WhisperForConditionalGeneration.from_pretrained(peft_config.base_model_name_or_path)
-    model = PeftModel.from_pretrained(base_model, checkpoint)
+    base_model_name = base_model or peft_config.base_model_name_or_path
+    base = WhisperForConditionalGeneration.from_pretrained(base_model_name, local_files_only=bool(base_model))
+    model = PeftModel.from_pretrained(base, checkpoint, local_files_only=True)
+    target_device = device if device == "cuda" and torch.cuda.is_available() else "cpu"
+    model.to(target_device)
+    model.eval()
+    return model, processor, target_device
+
+
+def load_base_whisper_checkpoint(checkpoint: Path, device: str = "cuda"):
+    try:
+        import torch
+        from transformers import WhisperForConditionalGeneration, WhisperProcessor
+    except ImportError as error:
+        raise RuntimeError("Transformers and PyTorch are required for Whisper inference.") from error
+
+    processor = WhisperProcessor.from_pretrained(checkpoint, local_files_only=True)
+    model = WhisperForConditionalGeneration.from_pretrained(checkpoint, local_files_only=True)
     target_device = device if device == "cuda" and torch.cuda.is_available() else "cpu"
     model.to(target_device)
     model.eval()
