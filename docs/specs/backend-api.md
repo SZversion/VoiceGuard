@@ -8,11 +8,11 @@
   1. 백엔드 API 계약이 없으면 프론트엔드가 실제 요청·응답 형식에 맞춰 개발할 수 없다.
   2. 모델 연결 코드와 작업 상태 관리가 섞이면 모델 교체 시 API와 배포 코드까지 함께 변경될 수 있다.
   3. 음성·전사·중간 결과를 성공·실패·취소 후 확실히 삭제할 공통 정리 흐름이 필요하다.
-- **측정 지표**: Swagger에서 정의된 모든 API 확인, 상태 전이·취소·임시자료 삭제 자동 테스트 통과, Railway 환경에서 `/api/v1/health` 응답 확인
+- **측정 지표**: Swagger에서 정의된 모든 API 확인, 상태 전이·취소·임시자료 삭제 자동 테스트 통과, Railway 환경에서 `/api/health` 응답 확인
 
 ## Goal
 
-- Nuxt.js가 연동할 `/api/v1` API 계약을 정의한다.
+- Nuxt.js가 연동할 `/api` API 계약을 정의한다.
 - FastAPI 서버, 모델 상태, 메모리 기반 작업 레지스트리, 취소, 오류 응답과 정리 책임을 분리한다.
 - 모델이 없는 상태에서는 분석 결과를 임의 생성하지 않고 `MODEL.NOT_READY` 오류를 반환한다.
 - 모델 전달 후 STT·분류 연결부를 교체할 수 있는 파일 경계를 정의한다.
@@ -20,8 +20,8 @@
 
 ### 성공 기준
 
-- `/api/v1/health`는 모델을 로드하지 않고 서버 상태를 반환한다.
-- `/api/v1/model-status`는 `loading`, `ready`, `error` 중 하나를 반환한다.
+- `/api/health`는 모델을 로드하지 않고 서버 상태를 반환한다.
+- `/api/model-status`는 `loading`, `ready`, `error` 중 하나를 반환한다.
 - 분석 생성·상태·결과·취소 API의 요청과 응답 형식이 Swagger에 표시된다.
 - 성공·실패·취소 흐름에서 원본 음성, 전사문, 중간 결과가 남지 않는다.
 - 모델 미연결 상태의 분석 요청은 HTTP 503과 `MODEL.NOT_READY`를 반환한다.
@@ -41,9 +41,9 @@
 
 1. 서버 시작 시 환경변수와 STT·분류 모델 설정을 확인한다.
 2. 모델이 없으면 모델 상태를 `loading` 또는 `error`로 유지한다.
-3. 프론트엔드는 `GET /api/v1/health`로 서버 응답 가능 여부를 확인한다.
-4. 프론트엔드는 `GET /api/v1/model-status`로 두 모델의 준비 상태를 확인한다.
-5. 사용자는 `POST /api/v1/analyze`에 `.wav`, `.mp3`, `.m4a` 파일 하나를 업로드한다.
+3. 프론트엔드는 `GET /api/health`로 서버 응답 가능 여부를 확인한다.
+4. 프론트엔드는 `GET /api/model-status`로 두 모델의 준비 상태를 확인한다.
+5. 사용자는 `POST /api/analyze`에 `.wav`, `.mp3`, `.m4a` 파일 하나를 업로드한다.
 6. 서버는 확장자, 실제 형식, 손상 여부, IP 요청 제한과 동일 사용자 중복 작업을 확인한다.
 7. 서버는 임시파일과 `job_id`를 만들고 작업 상태를 `queued`로 기록한다.
 8. 비동기 작업은 다음 단계 순서로 진행한다.
@@ -170,37 +170,37 @@ proj1-e/
 ### AC-01 · 서버 상태 확인
 
 - **GIVEN**: FastAPI 서버가 실행 중이다.
-- **WHEN**: 프론트엔드가 `GET /api/v1/health`를 호출한다.
+- **WHEN**: 프론트엔드가 `GET /api/health`를 호출한다.
 - **THEN**: 모델 로드 여부와 무관하게 HTTP 200과 서버 상태를 반환한다.
 
 ### AC-02 · 모델 상태 확인
 
 - **GIVEN**: STT 또는 분류 모델이 준비되지 않았다.
-- **WHEN**: `GET /api/v1/model-status`를 호출한다.
+- **WHEN**: `GET /api/model-status`를 호출한다.
 - **THEN**: HTTP 200과 `loading` 또는 `error` 상태를 반환하고 분석 가능 상태로 표시하지 않는다.
 
 ### AC-03 · 모델 미준비 분석 거절
 
 - **GIVEN**: 하나 이상의 모델이 준비되지 않았다.
-- **WHEN**: 지원 형식의 음성파일로 `POST /api/v1/analyze`를 호출한다.
+- **WHEN**: 지원 형식의 음성파일로 `POST /api/analyze`를 호출한다.
 - **THEN**: HTTP 503과 `MODEL.NOT_READY`를 반환하고 업로드 파일을 남기지 않는다.
 
 ### AC-04 · 작업 상태 조회
 
 - **GIVEN**: 테스트 대체 분석기로 생성한 작업이 진행 중이다.
-- **WHEN**: `GET /api/v1/analyze/{job_id}/status`를 호출한다.
+- **WHEN**: `GET /api/analyze/{job_id}/status`를 호출한다.
 - **THEN**: 정의된 `status`와 현재 `stage`만 반환하고 음성·전사 내용을 포함하지 않는다.
 
 ### AC-05 · 완료 결과 조회
 
 - **GIVEN**: 테스트 대체 분석기로 작업이 완료됐다.
-- **WHEN**: `GET /api/v1/analyze/{job_id}/result`를 호출한다.
+- **WHEN**: `GET /api/analyze/{job_id}/result`를 호출한다.
 - **THEN**: 라벨, 의심도, 최대 3개 참고 구간과 안내 문구를 계약에 맞춰 반환한다.
 
 ### AC-06 · 작업 취소와 정리
 
 - **GIVEN**: 작업이 완료되지 않고 진행 중이다.
-- **WHEN**: `DELETE /api/v1/analyze/{job_id}`를 호출한다.
+- **WHEN**: `DELETE /api/analyze/{job_id}`를 호출한다.
 - **THEN**: 상태를 `cancelled`로 바꾸고 결과를 폐기하며 임시자료를 삭제하고 사용자 잠금을 해제한다.
 
 ### AC-07 · 실패 시 정리
@@ -213,4 +213,4 @@ proj1-e/
 
 - **GIVEN**: Railway가 `PORT` 환경변수를 제공한다.
 - **WHEN**: 배포 시작 명령을 실행한다.
-- **THEN**: FastAPI가 `0.0.0.0:$PORT`에서 실행되고 `/docs`와 `/api/v1/health`에 접근할 수 있다.
+- **THEN**: FastAPI가 `0.0.0.0:$PORT`에서 실행되고 `/docs`와 `/api/health`에 접근할 수 있다.
