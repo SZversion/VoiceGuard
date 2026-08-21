@@ -37,16 +37,21 @@ if PROJECT_ROOT is None:
             shutil.rmtree(PROJECT_ROOT)
         clone = subprocess.run(['git', 'clone', '--depth', '1', '--branch', REPO_REF, REPO_URL, str(PROJECT_ROOT)], text=True, capture_output=True)
         if clone.returncode != 0:
-            raise RuntimeError(f'Drive/tools가 없고 비공개 저장소 clone도 실패했습니다. Drive/tools에 최신 코드를 업로드하세요.\n{clone.stderr}')
+            message = 'Drive/tools clone 실패. Drive/tools에 최신 코드를 업로드하세요. {}'.format(clone.stderr)
+            raise RuntimeError(message)
 sys.path.insert(0, str(PROJECT_ROOT))
 print('code root:', PROJECT_ROOT)
 
 DRIVE_ROOT = Path('/content/drive/MyDrive/his_voice')
-AUDIO_ROOT = DRIVE_ROOT / 'data_chunked_30s_overlap10_v2'
-LABEL_ROOT = DRIVE_ROOT / '30s_overlap10_label_v3'
-OUTPUT_ROOT = DRIVE_ROOT / 'models/whisper-lora/p0t2-drive-v3-full'
+AUDIO_ROOT_CANDIDATES = [
+    DRIVE_ROOT / 'data_chunked_overlap10_v2',
+    DRIVE_ROOT / 'data_chunked_30s_overlap10_v2',
+]
+AUDIO_ROOT = next((path for path in AUDIO_ROOT_CANDIDATES if path.is_dir()), None)
+LABEL_ROOT = DRIVE_ROOT / '30s_overlap10_label_v3_complete'
+OUTPUT_ROOT = DRIVE_ROOT / 'models/whisper-lora/p0t2-drive-v3-full-corrected'
 
-assert AUDIO_ROOT.is_dir(), AUDIO_ROOT
+assert AUDIO_ROOT is not None, AUDIO_ROOT_CANDIDATES
 assert LABEL_ROOT.is_dir(), LABEL_ROOT
 print('audio:', AUDIO_ROOT)
 print('labels:', LABEL_ROOT)
@@ -150,7 +155,7 @@ train_module._build_training_arguments = build_runtime_training_arguments
 OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
 runtime_config = OUTPUT_ROOT / '_runtime_p0t2_drive_v3.yaml'
 runtime_config.write_text(yaml.safe_dump(config, allow_unicode=True, sort_keys=False), encoding='utf-8')
-last_checkpoint = None if config['freeze_encoder'] is False else get_last_checkpoint(str(OUTPUT_ROOT))
+last_checkpoint = get_last_checkpoint(str(OUTPUT_ROOT))
 print('resume checkpoint:', last_checkpoint or '없음, 처음부터 시작')
 args = argparse.Namespace(
     data=TRAIN_DATA_ROOT,
