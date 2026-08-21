@@ -117,3 +117,29 @@ def test_analyze_remains_unavailable_when_runtime_is_not_ready():
 
     assert response.status_code == 503
     assert response.json()["error_code"] == "MODEL.NOT_READY"
+def test_default_runtime_uses_whisper_lora_loader(monkeypatch):
+    calls = []
+
+    class FakeTranscriber:
+        async def transcribe(self, audio: bytes) -> str:
+            return "전사 결과"
+
+    def fake_stt_loader():
+        calls.append("stt")
+        return FakeTranscriber()
+
+    def fake_classifier_loader():
+        calls.append("classifier")
+        return FakeClassifier()
+
+    import app.api.main as main_module
+
+    monkeypatch.setattr(main_module, "load_whisper_lora_transcriber", fake_stt_loader)
+    monkeypatch.setattr(main_module, "load_text_classifier", fake_classifier_loader)
+    test_app = main_module.create_app()
+
+    with TestClient(test_app) as client:
+        response = client.get("/api/model-status")
+
+    assert calls == ["stt", "classifier"]
+    assert response.json()["analyzable"] is True

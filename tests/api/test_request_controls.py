@@ -29,9 +29,9 @@ def test_analyze_rejects_rate_limited_owner():
     _configure_controls(max_requests=1)
 
     try:
-        with TestClient(app) as client:
-            first = client.post("/api/analyze", files=_audio_file())
-            second = client.post("/api/analyze", files=_audio_file())
+        client = TestClient(app)
+        first = client.post("/api/analyze", files=_audio_file())
+        second = client.post("/api/analyze", files=_audio_file())
     finally:
         app.state.analyzer = None
 
@@ -47,8 +47,7 @@ def test_analyze_rejects_duplicate_active_job():
     _configure_controls(max_requests=10, lock=lock)
 
     try:
-        with TestClient(app) as client:
-            response = client.post("/api/analyze", files=_audio_file())
+        response = TestClient(app).post("/api/analyze", files=_audio_file())
     finally:
         app.state.analyzer = None
 

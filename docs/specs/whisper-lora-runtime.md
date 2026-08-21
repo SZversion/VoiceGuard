@@ -5,7 +5,7 @@
 - **페르소나**: 한국어 통화 음성 분석 backend를 운영·검증하는 개발자
 - **상황**: FastAPI analyzer에는 STT adapter 경계가 있지만 현재 구현은 Faster-Whisper 기본 모델만 사용한다.
 - **문제**:
-  1. 요청된 openai/whisper-small base model과 SiomnTH/whisper-lora-run-002 adapter가 실제 runtime에 적용되지 않았다.
+  1. 요청된 openai/whisper-small base model과 VoiceGuardproject/whisper-lora-run-011 adapter가 실제 runtime에 적용되지 않았다.
   2. LoRA adapter가 적용되지 않은 상태를 fine-tuned STT가 동작한다고 오인할 수 있다.
   3. 실제 Hugging Face 다운로드 없이 loader와 adapter 계약을 검증할 테스트 경계가 없다.
 - **측정 지표**: base/adapter 로딩 성공 여부, adapter 적용 여부, 한국어 transcript 생성 여부, 분류모델과의 E2E 연결 여부, 실제 모델 추론 시간·메모리 기록
@@ -13,7 +13,7 @@
 ## Goal
 
 - openai/whisper-small을 base model로 로드한다.
-- SiomnTH/whisper-lora-run-002를 PEFT LoRA adapter로 base model에 적용한다.
+- VoiceGuardproject/whisper-lora-run-011를 PEFT LoRA adapter로 base model에 적용한다.
 - WhisperProcessor와 결합한 Transcriber adapter를 VoicePhishingAnalyzer에 주입할 수 있다.
 - 분류모델 user0074/voice-phishing-koelectra와 함께 FastAPI startup에서 로드할 수 있다.
 - loader와 analyzer wiring은 fake dependency injection으로 실제 다운로드 없이 테스트할 수 있다.
@@ -42,7 +42,7 @@
 
 1. startup이 WhisperProcessor를 base repository에서 로드한다.
 2. WhisperForConditionalGeneration을 openai/whisper-small에서 로드한다.
-3. PeftModel.from_pretrained로 SiomnTH/whisper-lora-run-002를 적용한다.
+3. PeftModel.from_pretrained로 VoiceGuardproject/whisper-lora-run-011를 적용한다.
 4. model을 evaluation mode로 전환한다.
 5. audio bytes를 16kHz mono waveform으로 변환한다.
 6. processor가 input features를 생성한다.
@@ -70,7 +70,7 @@
 ### Model constants
 
 - BASE_MODEL = 'openai/whisper-small'
-- ADAPTER_MODEL = 'SiomnTH/whisper-lora-run-002'
+- ADAPTER_MODEL = 'VoiceGuardproject/whisper-lora-run-011'
 - CLASSIFIER_MODEL = 'user0074/voice-phishing-koelectra'
 
 ### Runtime dependencies
@@ -107,7 +107,7 @@
 
 - **GIVEN**: fake base model과 fake PEFT loader가 정상 동작한다.
 - **WHEN**: loader가 초기화된다.
-- **THEN**: SiomnTH/whisper-lora-run-002가 adapter 식별자로 전달되고 inference model은 adapter 객체다.
+- **THEN**: VoiceGuardproject/whisper-lora-run-011가 adapter 식별자로 전달되고 inference model은 adapter 객체다.
 
 ### AC-03 · loader 실패
 
