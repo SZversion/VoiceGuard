@@ -47,6 +47,21 @@ class WhisperLoraDataTests(unittest.TestCase):
             self.assertEqual(pairs, [])
             self.assertEqual(issues[0].code, "missing_text")
 
+    def test_discover_pairs_supports_mirrored_label_root(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            audio_root = root / "audio"
+            label_root = root / "labels"
+            (audio_root / "loanScam").mkdir(parents=True)
+            (label_root / "loanScam").mkdir(parents=True)
+            (audio_root / "loanScam" / "chunk_0001.wav").write_bytes(b"audio")
+            (label_root / "loanScam" / "chunk_0001.txt").write_text("라벨", encoding="utf-8")
+
+            pairs, issues = discover_pairs(audio_root, (".wav",), text_root=label_root)
+
+            self.assertEqual([(item.audio.name, item.text.name) for item in pairs], [("chunk_0001.wav", "chunk_0001.txt")])
+            self.assertEqual(issues, [])
+
     def test_split_pairs_has_no_overlap_and_is_reproducible(self):
         with tempfile.TemporaryDirectory() as directory:
             pairs = make_pairs(Path(directory), count=10)
@@ -78,6 +93,11 @@ class WhisperLoraDataTests(unittest.TestCase):
 
         self.assertEqual(source_group_identifier(d03), "D03_J13_S000001_merged")
         self.assertEqual(source_group_identifier(phish), "PHISH_001")
+
+    def test_source_group_identifier_collapses_generic_four_digit_chunks(self):
+        pair = AudioTextPair(Path("E:/dataset/36553_들어보신_0001.wav"), Path("E:/dataset/x.txt"), "a")
+
+        self.assertEqual(source_group_identifier(pair), "36553_들어보신")
 
     def test_grouped_split_keeps_all_chunks_from_source_together(self):
         root = Path("E:/dataset")

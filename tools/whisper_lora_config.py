@@ -21,7 +21,7 @@ def load_whisper_lora_config(path: Path) -> dict[str, Any]:
 
     missing = REQUIRED_TOP_LEVEL_KEYS - set(config)
     if missing:
-        raise ValueError(f"Whisper LoRA config is missing keys: {sorted(missing)}")
+        raise ValueError("Whisper LoRA config is missing keys: {}".format(sorted(missing)))
 
     if config["language"] != "ko":
         raise ValueError("This workflow currently requires language=ko")

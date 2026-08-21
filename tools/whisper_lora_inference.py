@@ -77,7 +77,7 @@ def load_audio_file(audio_path: Path):
     stream = next((item for item in container.streams if item.type == "audio"), None)
     if stream is None:
         container.close()
-        raise ValueError(f"No audio stream found: {audio_path}")
+        raise ValueError("No audio stream found: {}".format(audio_path))
 
     resampler = av.audio.resampler.AudioResampler(format="fltp", layout="mono", rate=16000)
     chunks = []
@@ -91,7 +91,7 @@ def load_audio_file(audio_path: Path):
         container.close()
 
     if not chunks:
-        raise ValueError(f"Audio stream contains no samples: {audio_path}")
+        raise ValueError("Audio stream contains no samples: {}".format(audio_path))
     return {"array": np.concatenate(chunks).astype("float32", copy=False), "sampling_rate": 16000}
 
 

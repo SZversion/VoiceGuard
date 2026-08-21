@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import time
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +17,7 @@ from tools.whisper_lora_inference import load_audio_file
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Fine-tune Whisper with LoRA on sibling audio/TXT pairs")
     parser.add_argument("--data", type=Path, required=True, help="directory containing audio/TXT pairs")
+    parser.add_argument("--labels", type=Path, help="mirrored directory containing TXT labels")
     parser.add_argument("--output", type=Path, required=True, help="run output directory")
     parser.add_argument("--config", type=Path, default=Path("configs/whisper_lora.yaml"))
     parser.add_argument("--model")
@@ -45,7 +47,13 @@ def build_lora_config(lora: dict[str, Any]):
     )
 
 
-def build_whisper_model(model_name: str, lora: dict[str, Any], language: str = "ko", task: str = "transcribe"):
+def build_whisper_model(
+    model_name: str,
+    lora: dict[str, Any],
+    language: str = "ko",
+    task: str = "transcribe",
+    freeze_encoder: bool = True,
+):
     try:
         from peft import get_peft_model
         from transformers import WhisperForConditionalGeneration, WhisperProcessor
@@ -59,6 +67,14 @@ def build_whisper_model(model_name: str, lora: dict[str, Any], language: str = "
     model.generation_config.forced_decoder_ids = None
     model.config.use_cache = False
     model = get_peft_model(model, build_lora_config(lora))
+    if freeze_encoder:
+        for name, parameter in model.named_parameters():
+            if ".encoder." in name or name.startswith("encoder."):
+                parameter.requires_grad = False
+    else:
+        # Full fine-tuning: encoder, decoder, and LoRA parameters are trainable.
+        for parameter in model.parameters():
+            parameter.requires_grad = True
     model.print_trainable_parameters()
     return model, processor
 
@@ -69,7 +85,8 @@ def prepare_features(example: dict[str, Any], processor):
         audio["array"],
         sampling_rate=audio["sampling_rate"],
     ).input_features[0]
-    labels = processor.tokenizer(example["transcript"]).input_ids
+    # Whisper small's decoder accepts at most 448 target positions.
+    labels = processor.tokenizer(example["transcript"]).input_ids[:448]
     return {"input_features": features, "labels": labels}
 
 
@@ -97,7 +114,11 @@ class WhisperDataCollator:
         import torch
 
         input_features = [{"input_features": item["input_features"]} for item in features]
-        batch = self.processor.feature_extractor.pad(input_features, return_tensors="pt")
+        batch = self.processor.feature_extractor.pad(
+            input_features,
+            return_tensors="pt",
+            return_attention_mask=True,
+        )
         label_features = [{"input_ids": item["labels"]} for item in features]
         labels_batch = self.processor.tokenizer.pad(label_features, return_tensors="pt")
         labels = labels_batch["input_ids"].masked_fill(labels_batch.attention_mask.ne(1), -100)
@@ -118,6 +139,39 @@ def _load_training_dependencies():
     return Seq2SeqTrainer, Seq2SeqTrainingArguments
 
 
+def _build_progress_callback():
+    from transformers import TrainerCallback
+
+    class ProgressCallback(TrainerCallback):
+        def __init__(self):
+            self.started_at = time.time()
+
+        def on_log(self, args, state, control, logs=None, **kwargs):
+            if not logs or state.global_step <= 0 or state.global_step % 25 != 0:
+                return control
+            elapsed = time.time() - self.started_at
+            metrics = " ".join(
+                "{}={:.4f}".format(key, value)
+                for key, value in logs.items()
+                if isinstance(value, (int, float))
+            )
+            print(
+                "[progress] step={}/{} elapsed={:.1f}m {}".format(
+                    state.global_step, args.max_steps, elapsed / 60, metrics
+                ),
+                flush=True,
+            )
+            return control
+
+        def on_save(self, args, state, control, **kwargs):
+            if state.global_step % 250 == 0:
+                checkpoint = Path(args.output_dir) / "checkpoint-{}".format(state.global_step)
+                print("[checkpoint] step={} saved: {}".format(state.global_step, checkpoint), flush=True)
+            return control
+
+    return ProgressCallback()
+
+
 def _build_training_arguments(training: dict[str, Any], output: Path, fp16: bool):
     _, Seq2SeqTrainingArguments = _load_training_dependencies()
     values = {
@@ -129,11 +183,18 @@ def _build_training_arguments(training: dict[str, Any], output: Path, fp16: bool
         "num_train_epochs": float(training["num_train_epochs"]),
         "fp16": fp16,
         "logging_steps": int(training.get("logging_steps", 10)),
-        "save_total_limit": 2,
         "predict_with_generate": True,
         "remove_unused_columns": False,
         "report_to": [],
     }
+    if training.get("max_steps") is not None:
+        values["max_steps"] = int(training["max_steps"])
+    if training.get("save_steps") is not None:
+        values["save_steps"] = int(training["save_steps"])
+    if training.get("eval_steps") is not None:
+        values["eval_steps"] = int(training["eval_steps"])
+    if training.get("save_total_limit") is not None:
+        values["save_total_limit"] = int(training["save_total_limit"])
     try:
         return Seq2SeqTrainingArguments(
             **values,
@@ -148,11 +209,17 @@ def _build_training_arguments(training: dict[str, Any], output: Path, fp16: bool
         )
 
 
-def _prepare_manifest(data_root: Path, output: Path, config: dict[str, Any], seed: int) -> tuple[dict[str, list], list]:
+def _prepare_manifest(
+    data_root: Path,
+    output: Path,
+    config: dict[str, Any],
+    seed: int,
+    labels_root: Path | None = None,
+) -> tuple[dict[str, list], list]:
     extensions = tuple(config["data"]["extensions"])
-    pairs, issues = discover_pairs(data_root, extensions)
+    pairs, issues = discover_pairs(data_root, extensions, text_root=labels_root)
     if len(pairs) < 3:
-        raise ValueError(f"At least 3 valid audio/TXT pairs are required; found {len(pairs)}")
+        raise ValueError("At least 3 valid audio/TXT pairs are required; found {}".format(len(pairs)))
     ratios = SplitRatios(
         float(config["data"]["train_ratio"]),
         float(config["data"]["validation_ratio"]),
@@ -179,7 +246,7 @@ def train(args: argparse.Namespace) -> int:
     args.output.mkdir(parents=True, exist_ok=True)
     model_name = args.model or config["model_name"]
     seed = args.seed if args.seed is not None else int(config["data"]["seed"])
-    splits, issues = _prepare_manifest(args.data, args.output, config, seed)
+    splits, issues = _prepare_manifest(args.data, args.output, config, seed, labels_root=args.labels)
     print(
         json.dumps(
             {
@@ -205,7 +272,13 @@ def train(args: argparse.Namespace) -> int:
         raise ValueError("--fp16 requires CUDA")
 
     Seq2SeqTrainer, _ = _load_training_dependencies()
-    model, processor = build_whisper_model(model_name, config["lora"], config["language"], config["task"])
+    model, processor = build_whisper_model(
+        model_name,
+        config["lora"],
+        config["language"],
+        config["task"],
+        freeze_encoder=bool(config.get("freeze_encoder", True)),
+    )
     datasets = {split: WhisperPairDataset(pairs, processor) for split, pairs in splits.items()}
 
     training_args = _build_training_arguments(config["training"], args.output, fp16)
@@ -217,8 +290,16 @@ def train(args: argparse.Namespace) -> int:
         labels = prediction.label_ids
         labels = labels.copy()
         labels[labels == -100] = processor.tokenizer.pad_token_id
-        hypotheses = processor.batch_decode(predictions, skip_special_tokens=True)
-        references = processor.batch_decode(labels, skip_special_tokens=True)
+        hypotheses = processor.batch_decode(
+            predictions,
+            skip_special_tokens=True,
+            clean_up_tokenization_spaces=False,
+        )
+        references = processor.batch_decode(
+            labels,
+            skip_special_tokens=True,
+            clean_up_tokenization_spaces=False,
+        )
         return {
             "cer": sum(cer(ref, hyp) for ref, hyp in zip(references, hypotheses)) / len(references),
             "wer": sum(wer(ref, hyp) for ref, hyp in zip(references, hypotheses)) / len(references),
@@ -231,6 +312,7 @@ def train(args: argparse.Namespace) -> int:
         eval_dataset=datasets["validation"],
         data_collator=WhisperDataCollator(processor),
         compute_metrics=compute_metrics,
+        callbacks=[_build_progress_callback()],
     )
     trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
     trainer.save_model(args.output)

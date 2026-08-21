@@ -28,6 +28,9 @@ def source_group_identifier(pair: AudioTextPair) -> str:
     match = re.match(r"^(PHISH_\d+)_\d{4}$", stem, re.IGNORECASE)
     if match:
         return match.group(1)
+    generic_chunk = re.match(r"^(.*)_\d{4}$", stem)
+    if generic_chunk:
+        return generic_chunk.group(1)
     return stem
 
 
@@ -52,20 +55,29 @@ class SplitRatios:
             raise ValueError("split ratios must sum to 1.0")
 
 
-def discover_pairs(root: Path, extensions: tuple[str, ...]) -> tuple[list[AudioTextPair], list[DataIssue]]:
-    """Find valid sibling audio/TXT pairs and report invalid audio files."""
+def discover_pairs(
+    root: Path,
+    extensions: tuple[str, ...],
+    text_root: Path | None = None,
+) -> tuple[list[AudioTextPair], list[DataIssue]]:
+    """Find audio/TXT pairs, optionally using a separate mirrored label root."""
     if not root.exists() or not root.is_dir():
-        raise FileNotFoundError(f"Dataset directory does not exist: {root}")
+        raise FileNotFoundError("Dataset directory does not exist: {}".format(root))
 
     normalized_extensions = {extension.lower() for extension in extensions}
     pairs: list[AudioTextPair] = []
     issues: list[DataIssue] = []
     seen_identifiers: set[str] = set()
 
+    label_root = text_root or root
+    if not label_root.exists() or not label_root.is_dir():
+        raise FileNotFoundError("Label directory does not exist: {}".format(label_root))
+
     files = sorted(root.rglob("*"))
+    label_files = sorted(label_root.rglob("*"))
     text_files = {
-        (path.parent, path.stem.casefold()): path
-        for path in files
+        (path.relative_to(label_root).parent.as_posix(), path.stem.casefold()): path
+        for path in label_files
         if path.is_file() and path.suffix.lower() == ".txt"
     }
 
@@ -73,14 +85,15 @@ def discover_pairs(root: Path, extensions: tuple[str, ...]) -> tuple[list[AudioT
         if not audio.is_file() or audio.suffix.lower() not in normalized_extensions:
             continue
 
-        text = text_files.get((audio.parent, audio.stem.casefold()))
+        relative_parent = audio.relative_to(root).parent.as_posix()
+        text = text_files.get((relative_parent, audio.stem.casefold()))
         if text is None:
-            issues.append(DataIssue("missing_text", audio, f"No sibling TXT found for {audio.name}"))
+            issues.append(DataIssue("missing_text", audio, "No sibling TXT found for {}".format(audio.name)))
             continue
 
         identifier = audio.with_suffix("").relative_to(root).as_posix()
         if identifier in seen_identifiers:
-            issues.append(DataIssue("duplicate_pair", audio, f"Duplicate identifier: {identifier}"))
+            issues.append(DataIssue("duplicate_pair", audio, "Duplicate identifier: {}".format(identifier)))
             continue
 
         try:
