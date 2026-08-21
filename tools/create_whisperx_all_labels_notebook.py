@@ -53,8 +53,10 @@ import torch
 # WhisperX와 PyAnnote에서 내려받은 신뢰된 체크포인트를 대상으로 합니다.
 original_torch_load = torch.load
 def torch_load_compat(*args, **kwargs):
-    if 'weights_only' not in kwargs:
-        kwargs['weights_only'] = False
+    # lightning_fabric가 weights_only=None을 전달해도 PyTorch 2.6의
+    # 기본 안전 로딩 경로로 되돌아가지 않도록 신뢰된 WhisperX 체크포인트에
+    # 대해서는 항상 전체 pickle 로딩을 사용합니다.
+    kwargs['weights_only'] = False
     return original_torch_load(*args, **kwargs)
 torch.load = torch_load_compat
 
