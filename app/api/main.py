@@ -6,7 +6,9 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.analysis.analyzer import VoicePhishingAnalyzer
 from app.analysis.model_loader import load_text_classifier
+from app.analysis.stt_loader import load_stt_transcriber
 from app.api.exception_handlers import request_validation_exception_handler, unhandled_exception_handler
 from app.api.request_id import RequestIdMiddleware
 from app.api.routes.analyze import router as analyze_router
@@ -34,21 +36,52 @@ def _initial_model_status() -> dict[str, str | bool]:
     }
 
 
-def _load_classifier(app: FastAPI, classifier_loader: Callable[[], object]) -> None:
+def _load_component(
+    app: FastAPI,
+    state_name: str,
+    status_name: str,
+    loader: Callable[[], object],
+) -> None:
     try:
-        app.state.classifier = classifier_loader()
+        setattr(app.state, state_name, loader())
     except Exception:
-        app.state.classifier = None
-        app.state.model_status["classifier"] = "error"
+        setattr(app.state, state_name, None)
+        app.state.model_status[status_name] = "error"
         return
 
-    app.state.model_status["classifier"] = "ready"
+    app.state.model_status[status_name] = "ready"
 
 
-def create_app(classifier_loader: Callable[[], object] | None = None) -> FastAPI:
+def _initialize_runtime(
+    app: FastAPI,
+    stt_loader: Callable[[], object],
+    classifier_loader: Callable[[], object],
+) -> None:
+    _load_component(app, "transcriber", "stt", stt_loader)
+    _load_component(app, "classifier", "classifier", classifier_loader)
+
+    if (
+        app.state.model_status["stt"] == "ready"
+        and app.state.model_status["classifier"] == "ready"
+    ):
+        app.state.analyzer = VoicePhishingAnalyzer(
+            app.state.transcriber,
+            app.state.classifier,
+        )
+        app.state.model_status["analyzable"] = True
+
+
+def create_app(
+    stt_loader: Callable[[], object] | None = None,
+    classifier_loader: Callable[[], object] | None = None,
+) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        _load_classifier(app, classifier_loader or load_text_classifier)
+        _initialize_runtime(
+            app,
+            stt_loader or load_stt_transcriber,
+            classifier_loader or load_text_classifier,
+        )
         app.state.runtime_started = True
         try:
             yield
@@ -62,6 +95,7 @@ def create_app(classifier_loader: Callable[[], object] | None = None) -> FastAPI
     )
     app.state.job_registry = JobRegistry()
     app.state.analyzer = None
+    app.state.transcriber = None
     app.state.classifier = None
     app.state.model_status = _initial_model_status()
     app.state.runtime_started = False
