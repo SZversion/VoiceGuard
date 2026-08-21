@@ -5,6 +5,7 @@ import {
   ChartBarIcon,
   ChartBarSquareIcon,
   EllipsisHorizontalIcon,
+  HomeIcon,
   QuestionMarkCircleIcon,
   ShieldCheckIcon,
 } from '@heroicons/vue/24/outline'
@@ -13,7 +14,8 @@ const route = useRoute()
 const isMoreMenuOpen = ref(false)
 
 const navigation = [
-  { label: '통화 업로드', to: '/', icon: ArrowUpTrayIcon },
+  { label: '서비스 소개', to: '/', icon: HomeIcon },
+  { label: '통화 업로드', to: '/upload', icon: ArrowUpTrayIcon },
   { label: '분석 진행', to: '/analyze', icon: ChartBarIcon },
   { label: '분석 결과', to: '/result', icon: ChartBarSquareIcon },
   { label: '개인정보 보호 안내', to: '/privacy', icon: ShieldCheckIcon },
@@ -34,8 +36,7 @@ function closeMoreMenu() {
     <aside class="relative mb-8 h-[100px] w-full bg-brand-900 text-white sm:h-auto lg:mb-0 lg:fixed lg:inset-y-0 lg:flex lg:w-72 lg:flex-col">
       <div class="flex h-full items-center justify-between px-6 sm:h-auto sm:items-start sm:px-6 sm:py-12 lg:px-7">
         <NuxtLink to="/" class="block text-3xl font-bold leading-tight tracking-tight">
-          <span class="sm:hidden">Voice Guide</span>
-          <span class="hidden sm:inline">보이스피싱<br />통화 분석 MVP</span>
+          <span>Voice Guard</span>
         </NuxtLink>
 
         <button
@@ -51,7 +52,7 @@ function closeMoreMenu() {
 
       <div v-if="isMoreMenuOpen" class="absolute right-4 top-20 z-50 w-52 rounded-lg bg-white p-2 text-slate-800 shadow-xl ring-1 ring-slate-200 sm:hidden">
         <NuxtLink
-          v-for="item in navigation.slice(3)"
+          v-for="item in navigation.slice(4)"
           :key="item.to"
           :to="item.to"
           class="flex items-center gap-3 rounded-md px-3 py-3 text-sm font-semibold hover:bg-blue-50"
@@ -86,7 +87,6 @@ function closeMoreMenu() {
     </main>
 
     <button
-      v-if="route.path !== '/'"
       type="button"
       class="fixed bottom-5 right-5 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 lg:hidden"
       aria-label="페이지 맨 위로 이동"

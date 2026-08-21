@@ -126,7 +126,7 @@ async function handleCancel() {
 }
 
 function goToUpload() {
-  router.push('/')
+  router.push('/upload')
 }
 
 function setCurrentStepElement(element, step) {

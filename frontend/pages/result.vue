@@ -1,5 +1,6 @@
 <script setup>
 import {
+  ArrowUpTrayIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
   ShieldExclamationIcon,
@@ -41,7 +42,7 @@ async function loadResult() {
 }
 
 function goToUpload() {
-  router.push('/')
+  router.push('/upload')
 }
 
 function levelClass(level) {
@@ -71,6 +72,11 @@ onMounted(loadResult)
     </div>
 
     <div v-else class="mx-auto max-w-5xl space-y-6">
+      <section class="sm:hidden">
+        <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">분석 결과</h1>
+        <p class="mt-2 text-sm leading-6 text-slate-500">업로드한 통화 내용을 분석한 결과를 안내합니다.</p>
+      </section>
+
       <section
         class="flex flex-col gap-5 rounded-xl border p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-8"
         :class="isSuspicious ? 'border-red-200 bg-red-50' : 'border-emerald-200 bg-emerald-50'"
@@ -133,6 +139,15 @@ onMounted(loadResult)
       </section>
 
       <p class="text-center text-xs text-slate-400">{{ mode === 'mock' ? 'Mock API' : '실제 API' }} 결과 · 작업 번호 {{ jobId }}</p>
+
+      <button
+        type="button"
+        class="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3.5 text-base font-bold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 sm:hidden"
+        @click="goToUpload"
+      >
+        <ArrowUpTrayIcon class="h-5 w-5" aria-hidden="true" />
+        <span>통화 업로드로 이동</span>
+      </button>
     </div>
   </div>
 </template>
