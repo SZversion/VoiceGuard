@@ -29,36 +29,47 @@ def test_docs_endpoint_is_available():
 
     assert response.status_code == 200
 
+
 class FakeClassifier:
     pass
 
 
-def test_model_status_reports_classifier_ready_after_startup():
-    test_app = create_app(classifier_loader=lambda: FakeClassifier())
+def failing_stt_loader():
+    raise RuntimeError("stt unavailable")
+
+
+def test_model_status_reports_classifier_ready_when_stt_is_unavailable():
+    test_app = create_app(
+        stt_loader=failing_stt_loader,
+        classifier_loader=lambda: FakeClassifier(),
+    )
 
     with TestClient(test_app) as client:
         response = client.get("/api/model-status")
 
     assert response.status_code == 200
     assert response.json() == {
-        "stt": "not_ready",
+        "stt": "error",
         "classifier": "ready",
         "analyzable": False,
     }
 
 
-def test_model_status_reports_classifier_error_when_startup_loading_fails():
-    def failing_loader():
-        raise RuntimeError("model unavailable")
+def test_model_status_reports_loader_errors():
+    def failing_classifier_loader():
+        raise RuntimeError("classifier unavailable")
 
-    test_app = create_app(classifier_loader=failing_loader)
+    test_app = create_app(
+        stt_loader=failing_stt_loader,
+        classifier_loader=failing_classifier_loader,
+    )
 
     with TestClient(test_app) as client:
         response = client.get("/api/model-status")
 
     assert response.status_code == 200
     assert response.json() == {
-        "stt": "not_ready",
+        "stt": "error",
         "classifier": "error",
         "analyzable": False,
     }
