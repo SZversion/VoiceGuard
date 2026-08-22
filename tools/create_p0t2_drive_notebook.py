@@ -47,14 +47,21 @@ AUDIO_ROOT_CANDIDATES = [
     DRIVE_ROOT / 'data_chunked_overlap10_v2',
     DRIVE_ROOT / 'data_chunked_30s_overlap10_v2',
 ]
-AUDIO_ROOT = next((path for path in AUDIO_ROOT_CANDIDATES if path.is_dir()), None)
-LABEL_ROOT = DRIVE_ROOT / '30s_overlap10_label_v3_complete'
-OUTPUT_ROOT = DRIVE_ROOT / 'models/whisper-lora/p0t2-drive-v3-full-corrected'
+POSITIVE_AUDIO_ROOT = next((path for path in AUDIO_ROOT_CANDIDATES if path.is_dir()), None)
+POSITIVE_LABEL_ROOT = DRIVE_ROOT / '30s_overlap10_label_v3_complete'
+NEGATIVE_ROOT = DRIVE_ROOT / 'run002_negative_hf_dataset_chunked_30s'
+NEGATIVE_AUDIO_ROOT = NEGATIVE_ROOT / 'audio'
+NEGATIVE_LABEL_ROOT = NEGATIVE_ROOT / 'text'
+OUTPUT_ROOT = DRIVE_ROOT / 'models/whisper-lora/p0t2-drive-v3-full-positive-negative'
 
-assert AUDIO_ROOT is not None, AUDIO_ROOT_CANDIDATES
-assert LABEL_ROOT.is_dir(), LABEL_ROOT
-print('audio:', AUDIO_ROOT)
-print('labels:', LABEL_ROOT)
+assert POSITIVE_AUDIO_ROOT is not None, AUDIO_ROOT_CANDIDATES
+assert POSITIVE_LABEL_ROOT.is_dir(), POSITIVE_LABEL_ROOT
+assert NEGATIVE_AUDIO_ROOT.is_dir(), NEGATIVE_AUDIO_ROOT
+assert NEGATIVE_LABEL_ROOT.is_dir(), NEGATIVE_LABEL_ROOT
+print('positive audio:', POSITIVE_AUDIO_ROOT)
+print('positive labels:', POSITIVE_LABEL_ROOT)
+print('negative audio:', NEGATIVE_AUDIO_ROOT)
+print('negative labels:', NEGATIVE_LABEL_ROOT)
 print('output:', OUTPUT_ROOT)
 """)},
         {"cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [], "source": lines("""from tools.train_whisper_lora import _prepare_manifest
@@ -94,25 +101,37 @@ config = {
     },
 }
 
-if 'labels_root' in inspect.signature(_prepare_manifest).parameters:
-    TRAIN_DATA_ROOT = AUDIO_ROOT
-    splits, issues = _prepare_manifest(AUDIO_ROOT, OUTPUT_ROOT, config, seed=42, labels_root=LABEL_ROOT)
-else:
-    # 구버전 Drive/tools 호환: 데이터 복사 없이 /content에 음성·라벨 심볼릭 링크를 생성합니다.
-    TRAIN_DATA_ROOT = Path('/content/p0t2_mirrored_pairs')
-    for audio in AUDIO_ROOT.rglob('*'):
+TRAIN_DATA_ROOT = Path('/content/p0t2_positive_negative_pairs')
+if TRAIN_DATA_ROOT.exists():
+    import shutil
+    shutil.rmtree(TRAIN_DATA_ROOT)
+
+def link_dataset(audio_root, label_root, dataset_name):
+    linked = 0
+    missing_labels = 0
+    for audio in audio_root.rglob('*'):
         if not audio.is_file() or audio.suffix.lower() not in config['data']['extensions']:
             continue
-        rel = audio.relative_to(AUDIO_ROOT)
-        label = LABEL_ROOT / rel.with_suffix('.txt')
-        target_audio = TRAIN_DATA_ROOT / rel
+        rel = audio.relative_to(audio_root)
+        label = label_root / rel.with_suffix('.txt')
+        if not label.is_file():
+            missing_labels += 1
+            continue
+        target_audio = TRAIN_DATA_ROOT / dataset_name / rel
         target_label = target_audio.with_suffix('.txt')
         target_audio.parent.mkdir(parents=True, exist_ok=True)
-        if not target_audio.exists():
-            os.symlink(audio, target_audio)
-        if label.exists() and not target_label.exists():
-            os.symlink(label, target_label)
-    splits, issues = _prepare_manifest(TRAIN_DATA_ROOT, OUTPUT_ROOT, config, seed=42)
+        target_label.parent.mkdir(parents=True, exist_ok=True)
+        os.symlink(str(audio), str(target_audio))
+        os.symlink(str(label), str(target_label))
+        linked += 1
+    return linked, missing_labels
+
+positive_linked, positive_missing = link_dataset(POSITIVE_AUDIO_ROOT, POSITIVE_LABEL_ROOT, 'positive')
+negative_linked, negative_missing = link_dataset(NEGATIVE_AUDIO_ROOT, NEGATIVE_LABEL_ROOT, 'negative')
+print('linked positive pairs:', positive_linked, 'missing labels:', positive_missing)
+print('linked negative pairs:', negative_linked, 'missing labels:', negative_missing)
+
+splits, issues = _prepare_manifest(TRAIN_DATA_ROOT, OUTPUT_ROOT, config, seed=42)
 print('split counts:', {name: len(items) for name, items in splits.items()})
 print('issues:', len(issues))
 print('issue counts:', dict(Counter(issue.code for issue in issues)))
@@ -159,7 +178,7 @@ last_checkpoint = get_last_checkpoint(str(OUTPUT_ROOT))
 print('resume checkpoint:', last_checkpoint or '없음, 처음부터 시작')
 args = argparse.Namespace(
     data=TRAIN_DATA_ROOT,
-    labels=LABEL_ROOT if TRAIN_DATA_ROOT == AUDIO_ROOT else None,
+    labels=None,
     output=OUTPUT_ROOT,
     config=runtime_config,
     model='openai/whisper-small',
