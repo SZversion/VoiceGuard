@@ -3,27 +3,23 @@ const router = useRouter()
 const { createAnalysis, mode } = useAnalysisApi()
 const analysisStore = useAnalysisStore()
 
-const selectedFile = ref(null)
 const errorMessage = ref('')
 const isSubmitting = ref(false)
 
-const canStart = computed(() => selectedFile.value && !isSubmitting.value)
+const canStart = computed(() => analysisStore.selectedFile && !isSubmitting.value)
 
 function selectFile(file) {
-  analysisStore.clear()
-  selectedFile.value = file
+  analysisStore.setSelectedFile(file)
   errorMessage.value = ''
 }
 
 function showFileError(message) {
   analysisStore.clear()
-  selectedFile.value = null
   errorMessage.value = message
 }
 
 function removeFile() {
   analysisStore.clear()
-  selectedFile.value = null
   errorMessage.value = ''
 }
 
@@ -34,7 +30,7 @@ async function startAnalysis() {
   errorMessage.value = ''
 
   try {
-    const response = await createAnalysis(selectedFile.value)
+    const response = await createAnalysis(analysisStore.selectedFile)
     analysisStore.setJobId(response.job_id)
     await router.push({ path: '/analyze', query: { job_id: response.job_id } })
   } catch {
@@ -57,7 +53,7 @@ async function startAnalysis() {
     <div class="mx-auto mt-10 max-w-3xl space-y-5">
       <ConsentNotice />
       <AudioUploader @selected="selectFile" @error="showFileError" />
-      <FileInfo :file="selectedFile" @remove="removeFile" />
+      <FileInfo :file="analysisStore.selectedFile" @remove="removeFile" />
 
       <p v-if="errorMessage" class="rounded-md bg-red-50 px-4 py-3 text-sm font-semibold text-red-700" role="alert">
         {{ errorMessage }}
