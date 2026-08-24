@@ -1,6 +1,7 @@
 <script setup>
 const router = useRouter()
 const { createAnalysis, mode } = useAnalysisApi()
+const analysisStore = useAnalysisStore()
 
 const selectedFile = ref(null)
 const errorMessage = ref('')
@@ -9,16 +10,19 @@ const isSubmitting = ref(false)
 const canStart = computed(() => selectedFile.value && !isSubmitting.value)
 
 function selectFile(file) {
+  analysisStore.clear()
   selectedFile.value = file
   errorMessage.value = ''
 }
 
 function showFileError(message) {
+  analysisStore.clear()
   selectedFile.value = null
   errorMessage.value = message
 }
 
 function removeFile() {
+  analysisStore.clear()
   selectedFile.value = null
   errorMessage.value = ''
 }
@@ -31,6 +35,7 @@ async function startAnalysis() {
 
   try {
     const response = await createAnalysis(selectedFile.value)
+    analysisStore.setJobId(response.job_id)
     await router.push({ path: '/analyze', query: { job_id: response.job_id } })
   } catch {
     errorMessage.value = '분석을 시작하지 못했습니다. 잠시 후 다시 시도해주세요.'
