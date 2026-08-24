@@ -26,6 +26,13 @@ def get_result(request: Request, job_id: str):
     job, error = _job_or_error(request, job_id)
     if error:
         return error
+    if job.status == "failed":
+        failure = job.error or {}
+        return error_response(
+            request,
+            failure.get("error_code", "ANALYSIS.FAILED"),
+            failure.get("message", "분석 중 오류가 발생했습니다."),
+        )
     if job.status != "completed":
         return error_response(request, "JOB.NOT_COMPLETED", "작업이 아직 완료되지 않았습니다.")
     return {"job_id": job.job_id, "result": job.result}

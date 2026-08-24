@@ -20,6 +20,7 @@ ERROR_DEFINITIONS = {
     "AUDIO.INVALID_FORMAT": ErrorDefinition(400, "upload_validation", False),
     "SERVICE.RATE_LIMITED": ErrorDefinition(429, "request_validation", True),
     "MODEL.NOT_READY": ErrorDefinition(503, "model_loading", True),
+    "ANALYSIS.FAILED": ErrorDefinition(500, "analysis", True),
     "JOB.NOT_FOUND": ErrorDefinition(404, "job_lookup", False),
     "JOB.DUPLICATE": ErrorDefinition(409, "job_lookup", False),
     "JOB.NOT_COMPLETED": ErrorDefinition(409, "job_lookup", False),
