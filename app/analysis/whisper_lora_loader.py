@@ -44,6 +44,7 @@ def load_whisper_lora_transcriber(
         ADAPTER_MODEL,
     )
     selected_device = device or os.getenv("STT_DEVICE", "cpu")
+    selected_max_new_tokens = int(os.getenv("STT_MAX_NEW_TOKENS", "128"))
 
     try:
         processor = (processor_factory or _processor_factory)(selected_base)

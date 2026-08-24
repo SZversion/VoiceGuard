@@ -61,13 +61,17 @@ def test_transcriber_runs_processor_generate_and_decode():
         processor,
         model,
         decoder=fake_decoder,
+        max_new_tokens=64,
     )
 
     transcript = asyncio.run(transcriber.transcribe(b"audio bytes"))
 
     assert transcript == "한국어 전사 결과"
     assert processor.processor_calls == [([0.1, 0.2], 16000, "pt", True)]
-    assert model.generate_calls == [{"input_features": ["features"]}]
+    assert model.generate_calls == [{
+        "input_features": ["features"],
+        "max_new_tokens": 64,
+    }]
     assert processor.decode_calls == [(["generated ids"], True)]
 
 
