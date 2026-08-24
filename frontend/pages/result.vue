@@ -13,11 +13,13 @@ const { mode, getAnalysisResult } = useAnalysisApi()
 const analysisStore = useAnalysisStore()
 
 const errorMessage = ref('')
-const isLoading = ref(!analysisStore.hasResult)
+const isAnalysisFailure = computed(() => analysisStore.status === 'failed' || Boolean(analysisStore.failure))
+const isLoading = ref(!analysisStore.hasResult && !isAnalysisFailure.value)
 
 const jobId = computed(() => String(route.query.job_id || analysisStore.currentJobId || ''))
 const resultData = computed(() => analysisStore.result?.result || analysisStore.result || {})
 const score = computed(() => {
+  if (isAnalysisFailure.value) return null
   const directScore = resultData.value.score ?? resultData.value.risk_score
   const rawScore = directScore ?? resultData.value.suspicion_score
   const numericScore = Number(rawScore ?? 0)
@@ -40,6 +42,11 @@ const advice = computed(() => {
 })
 
 async function loadResult() {
+  if (isAnalysisFailure.value) {
+    isLoading.value = false
+    return
+  }
+
   if (analysisStore.hasResult && analysisStore.currentJobId === jobId.value) {
     isLoading.value = false
     return
@@ -62,6 +69,7 @@ async function loadResult() {
 }
 
 function goToUpload() {
+  analysisStore.clear()
   router.push('/upload')
 }
 
@@ -87,6 +95,18 @@ onMounted(loadResult)
           <p class="font-bold">결과를 표시할 수 없습니다.</p>
           <p class="mt-2 text-sm">{{ errorMessage }}</p>
           <button type="button" class="mt-4 font-bold text-blue-700 underline" @click="goToUpload">업로드 화면으로 돌아가기</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-else-if="isAnalysisFailure" class="mx-auto max-w-3xl rounded-xl border border-red-200 bg-red-50 p-6 text-red-800">
+      <div class="flex items-start gap-3">
+        <ExclamationTriangleIcon class="h-7 w-7 shrink-0 text-red-600" aria-hidden="true" />
+        <div>
+          <p class="text-xl font-extrabold">분석 중 오류가 발생했습니다.</p>
+          <p class="mt-2">음성파일을 분석하는 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.</p>
+          <p v-if="analysisStore.failure?.message" class="mt-2 text-sm text-red-700">{{ analysisStore.failure.message }}</p>
+          <button type="button" class="mt-5 rounded-lg bg-blue-600 px-4 py-2 font-bold text-white hover:bg-blue-700" @click="goToUpload">새 파일로 다시 분석</button>
         </div>
       </div>
     </div>

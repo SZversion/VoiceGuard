@@ -11,12 +11,12 @@ const mockSteps = [
 
 const progressByStage = {
   queued: 0,
-  preprocessing: 15,
-  transcribing: 35,
-  normalizing: 50,
+  preprocessing: 10,
+  transcribing: 30,
+  normalizing: 45,
   classifying: 65,
-  risk_search: 82,
-  finalizing: 94,
+  risk_search: 80,
+  finalizing: 90,
   completed: 100
 }
 

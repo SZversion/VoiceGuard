@@ -33,7 +33,11 @@ const terminalStatuses = ['completed', 'failed', 'cancelled']
 const status = computed(() => analysis.value?.status || 'queued')
 const isTerminal = computed(() => terminalStatuses.includes(status.value))
 const steps = computed(() => analysis.value?.steps?.length ? analysis.value.steps : defaultSteps)
-const progress = computed(() => Number(analysis.value?.progress || 0))
+const progress = computed(() => {
+  const value = Number(analysis.value?.progress)
+  if (!Number.isFinite(value)) return 0
+  return Math.min(100, Math.max(0, value))
+})
 const currentStage = computed(() => analysis.value?.stage || 'queued')
 const currentStepElement = ref(null)
 
@@ -96,9 +100,16 @@ async function loadStatus() {
   try {
     const response = await getAnalysisStatus(jobId.value)
     analysis.value = response
+    analysisStore.setStatus(jobId.value, response)
     errorMessage.value = ''
     if (response.status === 'completed') {
       stopPolling()
+      await router.replace({ path: '/result', query: { job_id: jobId.value } })
+      return
+    }
+    if (response.status === 'failed') {
+      stopPolling()
+      analysisStore.setFailure(jobId.value, response.error?.message || response.message)
       await router.replace({ path: '/result', query: { job_id: jobId.value } })
       return
     }
