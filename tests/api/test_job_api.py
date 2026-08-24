@@ -54,6 +54,25 @@ def test_result_rejects_incomplete_job():
     assert response.json()["error_code"] == "JOB.NOT_COMPLETED"
 
 
+def test_result_returns_analysis_failure_for_failed_job():
+    job = app.state.job_registry.create(owner_key="hashed-ip")
+    app.state.job_registry.update(
+        job.job_id,
+        status="failed",
+        stage="failed",
+        error={
+            "error_code": "ANALYSIS.FAILED",
+            "message": "분석 중 오류가 발생했습니다.",
+        },
+    )
+
+    response = TestClient(app).get(f"/api/analyze/{job.job_id}/result")
+
+    assert response.status_code == 500
+    assert response.json()["error_code"] == "ANALYSIS.FAILED"
+    assert response.json()["message"] == "분석 중 오류가 발생했습니다."
+
+
 def test_cancel_returns_cancelled_state():
     job = app.state.job_registry.create(owner_key="hashed-ip")
     app.state.job_registry.update(job.job_id, status="running", stage="transcribing")
