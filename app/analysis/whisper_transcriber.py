@@ -18,6 +18,7 @@ class TranscriptionError(STTError):
 
 def _decode_audio(audio: bytes):
     try:
+        import soundfile as sf
         import torch
         import torchaudio
     except ImportError as exc:
@@ -26,9 +27,13 @@ def _decode_audio(audio: bytes):
         ) from exc
 
     try:
-        waveform, sample_rate = torchaudio.load(io.BytesIO(audio))
-        if waveform.ndim == 2:
-            waveform = waveform.mean(dim=0)
+        samples, sample_rate = sf.read(
+            io.BytesIO(audio),
+            dtype="float32",
+            always_2d=True,
+        )
+        waveform = torch.from_numpy(samples).transpose(0, 1).contiguous()
+        waveform = waveform.mean(dim=0)
         if sample_rate != 16_000:
             waveform = torchaudio.functional.resample(
                 waveform,
@@ -38,7 +43,9 @@ def _decode_audio(audio: bytes):
             sample_rate = 16_000
         return waveform.to(dtype=torch.float32), sample_rate
     except Exception as exc:
-        raise TranscriptionError("audio decoding failed") from exc
+        raise TranscriptionError(
+            f"audio decoding failed ({type(exc).__name__}: {exc})"
+        ) from exc
 
 
 class WhisperLoRATranscriber:
@@ -87,8 +94,12 @@ class WhisperLoRATranscriber:
                 generated_ids,
                 skip_special_tokens=True,
             )
+        except TranscriptionError:
+            raise
         except Exception as exc:
-            raise TranscriptionError("Whisper inference failed") from exc
+            raise TranscriptionError(
+                f"Whisper inference failed ({type(exc).__name__}: {exc})"
+            ) from exc
 
         transcript = str(texts[0] if texts else "").strip()
         if not transcript:

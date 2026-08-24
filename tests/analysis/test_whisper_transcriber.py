@@ -1,4 +1,6 @@
 import asyncio
+import io
+import wave
 
 import pytest
 
@@ -6,6 +8,7 @@ from app.analysis.whisper_transcriber import (
     AudioInputError,
     WhisperLoRATranscriber,
     TranscriptionError,
+    _decode_audio,
 )
 
 
@@ -34,6 +37,21 @@ class FakeModel:
 
 def fake_decoder(audio: bytes):
     return [0.1, 0.2], 16000
+
+
+def test_decode_audio_reads_wav_bytes():
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as wav_file:
+        wav_file.setnchannels(1)
+        wav_file.setsampwidth(2)
+        wav_file.setframerate(16_000)
+        wav_file.writeframes(b"\x00\x00" * 16)
+
+    waveform, sample_rate = _decode_audio(buffer.getvalue())
+
+    assert sample_rate == 16_000
+    assert str(waveform.dtype) == "torch.float32"
+    assert waveform.shape[0] == 16
 
 
 def test_transcriber_runs_processor_generate_and_decode():
@@ -74,5 +92,8 @@ def test_transcriber_wraps_decode_or_inference_failure():
         decoder=failing_decoder,
     )
 
-    with pytest.raises(TranscriptionError):
+    with pytest.raises(TranscriptionError) as error_info:
         asyncio.run(transcriber.transcribe(b"audio bytes"))
+
+    assert "decode failed" in str(error_info.value)
+    assert isinstance(error_info.value.__cause__, RuntimeError)
