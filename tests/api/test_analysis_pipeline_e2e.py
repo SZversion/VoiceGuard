@@ -72,6 +72,7 @@ def test_analysis_pipeline_completes_and_returns_result(tmp_path: Path):
             "job_id": job_id,
             "status": "completed",
             "stage": "completed",
+            "progress": 100,
         }
 
         result_response = client.get(f"/api/analyze/{job_id}/result")
@@ -108,6 +109,7 @@ def test_analysis_pipeline_records_failure_and_cleans_up(tmp_path: Path):
             "job_id": job_id,
             "status": "failed",
             "stage": "failed",
+            "progress": 30,
         }
 
         job = test_app.state.job_registry.get(job_id)

@@ -103,7 +103,7 @@ completed
 | GET | `/api/analyze/{job_id}/result` | 완료된 분석 결과 반환 |
 | DELETE | `/api/analyze/{job_id}` | 작업 취소와 결과 폐기 |
 
-분석 업로드는 `multipart/form-data`의 `audio` 필드를 사용한다. 작업 상태는 `queued`, `running`, `completed`, `failed`, `cancelled`를 사용하고 처리 단계는 `queued`, `preprocessing`, `transcribing`, `classifying`, `finalizing`, `completed`, `failed`, `cancelled`를 사용한다.
+분석 업로드는 `multipart/form-data`의 `audio` 필드를 사용한다. 작업 상태는 `queued`, `running`, `completed`, `failed`, `cancelled`를 사용하고 처리 단계는 `queued`, `preprocessing`, `transcribing`, `normalizing`, `classifying`, `risk_search`, `finalizing`, `completed`, `failed`, `cancelled`를 사용한다.
 
 오류 응답은 PRD의 공통 구조를 따른다.
 
@@ -214,3 +214,21 @@ proj1-e/
 - **GIVEN**: Railway가 `PORT` 환경변수를 제공한다.
 - **WHEN**: 배포 시작 명령을 실행한다.
 - **THEN**: FastAPI가 `0.0.0.0:$PORT`에서 실행되고 `/docs`와 `/api/health`에 접근할 수 있다.
+
+
+## Analysis progress contract
+
+The job status response keeps the existing `job_id`, `status`, and `stage` fields and adds an integer `progress` from 0 to 100.
+
+| Stage | Progress |
+|---|---:|
+| queued | 0 |
+| preprocessing | 10 |
+| transcribing | 30 |
+| normalizing | 45 |
+| classifying | 65 |
+| risk_search | 80 |
+| finalizing | 90 |
+| completed | 100 |
+
+Progress is monotonic during a running job. Failed and cancelled jobs do not advance to completed.

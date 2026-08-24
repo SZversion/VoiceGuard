@@ -9,6 +9,9 @@ class Transcriber(Protocol):
         ...
 
 
+StageReporter = Callable[[str], None]
+
+
 class VoicePhishingAnalyzer:
     """Run transcription and text classification as one analyzer."""
 
@@ -16,19 +19,37 @@ class VoicePhishingAnalyzer:
         self,
         transcriber: Transcriber | Callable[[bytes], Awaitable[str]],
         classifier: TextClassifier,
-        guidance: str = "검토가 필요한 경우 금융기관 공식 채널로 확인하세요.",
+        guidance: str = "\uac80\ud1a0\uac00 \ud544\uc694\ud55c \uacbd\uc6b0 \uae08\uc735\uae30\uad00 \uacf5\uc2dd \ucc44\ub110\ub85c \ud655\uc778\ud558\uc138\uc694.",
     ):
         self.transcriber = transcriber
         self.classifier = classifier
         self.guidance = guidance
 
     async def analyze(self, audio: bytes) -> Mapping[str, object]:
+        return await self.analyze_with_progress(audio, lambda stage: None)
+
+    async def analyze_with_progress(
+        self,
+        audio: bytes,
+        report_stage: StageReporter,
+    ) -> Mapping[str, object]:
+        report_stage("transcribing")
         transcript = await self._transcribe(audio)
-        result = self.classifier.classify(transcript)
+
+        report_stage("normalizing")
+        normalized_transcript = transcript
+
+        report_stage("classifying")
+        result = self.classifier.classify(normalized_transcript)
+
+        report_stage("risk_search")
+        reference_segments = []
+
+        report_stage("finalizing")
         return {
             "label": result.label,
             "suspicion_score": result.suspicion_score,
-            "reference_segments": [],
+            "reference_segments": reference_segments,
             "guidance": self.guidance,
         }
 
