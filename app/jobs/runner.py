@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from app.analysis.interfaces import Analyzer
@@ -16,6 +17,7 @@ class JobRunner:
         job_lock=None,
         owner_key=None,
         task_registry=None,
+        timeout_seconds: float = 300.0,
     ):
         self.registry = registry
         self.analyzer = analyzer
@@ -23,11 +25,15 @@ class JobRunner:
         self.job_lock = job_lock
         self.owner_key = owner_key
         self.task_registry = task_registry
+        self.timeout_seconds = timeout_seconds
 
     async def run(self, job_id: str, audio: bytes, temp_path: str | None = None) -> None:
         try:
             self.registry.update(job_id, status="running", stage="preprocessing")
-            result = await self.analyzer.analyze(audio)
+            result = await asyncio.wait_for(
+                self.analyzer.analyze(audio),
+                timeout=self.timeout_seconds,
+            )
             job = self.registry.get(job_id)
             if job is None or job.status == "cancelled":
                 return

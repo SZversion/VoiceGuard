@@ -1,4 +1,5 @@
 import asyncio
+import os
 
 from fastapi import APIRouter, File, Request, UploadFile
 from fastapi.responses import JSONResponse
@@ -52,6 +53,7 @@ async def create_analysis_job(request: Request, audio: UploadFile = File(...)):
             request.app.state.job_lock,
             owner_key,
             request.app.state.task_registry,
+            timeout_seconds=float(os.getenv("ANALYSIS_TIMEOUT_SECONDS", "300")),
         ).run(job.job_id, data, temp_path)
     )
     request.app.state.task_registry.register(job.job_id, task)

@@ -57,11 +57,13 @@ class WhisperLoRATranscriber:
         model: Any,
         decoder: Callable[[bytes], tuple[Any, int]] = _decode_audio,
         device: str = "cpu",
+        max_new_tokens: int = 128,
     ):
         self.processor = processor
         self.model = model
         self.decoder = decoder
         self.device = device
+        self.max_new_tokens = max_new_tokens
 
     async def transcribe(self, audio: bytes) -> str:
         if not audio:
@@ -89,7 +91,10 @@ class WhisperLoRATranscriber:
             import torch
 
             with torch.no_grad():
-                generated_ids = self.model.generate(**inputs)
+                generated_ids = self.model.generate(
+                    **inputs,
+                    max_new_tokens=self.max_new_tokens,
+                )
             texts = self.processor.batch_decode(
                 generated_ids,
                 skip_special_tokens=True,

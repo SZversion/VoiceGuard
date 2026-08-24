@@ -36,3 +36,27 @@ def test_runner_marks_job_failed_when_analyzer_raises(caplog):
     assert failed.status == "failed"
     assert failed.stage == "failed"
     assert failed.error["error_code"] == "ANALYSIS.FAILED"
+
+
+def test_runner_marks_job_failed_when_analysis_times_out():
+    class SlowAnalyzer:
+        async def analyze(self, audio: bytes) -> dict:
+            import asyncio
+
+            await asyncio.sleep(1)
+            return {}
+
+    registry = JobRegistry()
+    job = registry.create(owner_key="test-owner")
+
+    asyncio.run(
+        JobRunner(
+            registry,
+            SlowAnalyzer(),
+            timeout_seconds=0.01,
+        ).run(job.job_id, b"audio")
+    )
+
+    failed = registry.get(job.job_id)
+    assert failed.status == "failed"
+    assert failed.error["error_code"] == "ANALYSIS.FAILED"
