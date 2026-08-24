@@ -74,5 +74,8 @@ def test_transcriber_wraps_decode_or_inference_failure():
         decoder=failing_decoder,
     )
 
-    with pytest.raises(TranscriptionError):
+    with pytest.raises(TranscriptionError) as error_info:
         asyncio.run(transcriber.transcribe(b"audio bytes"))
+
+    assert "decode failed" in str(error_info.value)
+    assert isinstance(error_info.value.__cause__, RuntimeError)

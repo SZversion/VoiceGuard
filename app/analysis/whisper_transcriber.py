@@ -38,7 +38,9 @@ def _decode_audio(audio: bytes):
             sample_rate = 16_000
         return waveform.to(dtype=torch.float32), sample_rate
     except Exception as exc:
-        raise TranscriptionError("audio decoding failed") from exc
+        raise TranscriptionError(
+            f"audio decoding failed ({type(exc).__name__}: {exc})"
+        ) from exc
 
 
 class WhisperLoRATranscriber:
@@ -87,8 +89,12 @@ class WhisperLoRATranscriber:
                 generated_ids,
                 skip_special_tokens=True,
             )
+        except TranscriptionError:
+            raise
         except Exception as exc:
-            raise TranscriptionError("Whisper inference failed") from exc
+            raise TranscriptionError(
+                f"Whisper inference failed ({type(exc).__name__}: {exc})"
+            ) from exc
 
         transcript = str(texts[0] if texts else "").strip()
         if not transcript:
