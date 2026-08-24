@@ -10,13 +10,13 @@ import {
 const route = useRoute()
 const router = useRouter()
 const { mode, getAnalysisResult } = useAnalysisApi()
+const analysisStore = useAnalysisStore()
 
-const result = ref(null)
 const errorMessage = ref('')
-const isLoading = ref(true)
+const isLoading = ref(!analysisStore.hasResult)
 
-const jobId = computed(() => String(route.query.job_id || ''))
-const resultData = computed(() => result.value?.result || result.value || {})
+const jobId = computed(() => String(route.query.job_id || analysisStore.currentJobId || ''))
+const resultData = computed(() => analysisStore.result?.result || analysisStore.result || {})
 const score = computed(() => Number(resultData.value.score ?? resultData.value.risk_score ?? 0))
 const label = computed(() => resultData.value.label || (score.value >= 50 ? '보이스피싱 의심' : '정상 통화'))
 const isSuspicious = computed(() => label.value.includes('의심') || score.value >= 50)
@@ -26,6 +26,11 @@ const segments = computed(() => Array.isArray(resultData.value.segments) ? resul
 const advice = computed(() => Array.isArray(resultData.value.advice) ? resultData.value.advice : [])
 
 async function loadResult() {
+  if (analysisStore.hasResult && analysisStore.currentJobId === jobId.value) {
+    isLoading.value = false
+    return
+  }
+
   if (!jobId.value) {
     errorMessage.value = '분석 작업 번호를 찾을 수 없습니다. 분석 진행 화면에서 다시 확인해주세요.'
     isLoading.value = false
@@ -33,7 +38,8 @@ async function loadResult() {
   }
 
   try {
-    result.value = await getAnalysisResult(jobId.value)
+    const response = await getAnalysisResult(jobId.value)
+    analysisStore.setResult(jobId.value, response)
   } catch {
     errorMessage.value = '분석 결과를 불러오지 못했습니다. 분석이 완료되었는지 확인해주세요.'
   } finally {

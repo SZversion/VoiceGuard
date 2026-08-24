@@ -11,6 +11,7 @@ import {
 const route = useRoute()
 const router = useRouter()
 const { mode, getAnalysisStatus, cancelAnalysis } = useAnalysisApi()
+const analysisStore = useAnalysisStore()
 
 const defaultSteps = [
   { key: 'preprocessing', label: '음성 전처리', description: '잡음 제거 및 음성 품질 개선을 진행합니다.' },
@@ -35,6 +36,10 @@ const steps = computed(() => analysis.value?.steps?.length ? analysis.value.step
 const progress = computed(() => Number(analysis.value?.progress || 0))
 const currentStage = computed(() => analysis.value?.stage || 'queued')
 const currentStepElement = ref(null)
+
+watch(jobId, (nextJobId) => {
+  if (nextJobId) analysisStore.setJobId(nextJobId)
+}, { immediate: true })
 
 const statusLabel = computed(() => ({
   queued: '분석 준비 중',
