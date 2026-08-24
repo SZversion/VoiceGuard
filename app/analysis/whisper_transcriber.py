@@ -18,6 +18,7 @@ class TranscriptionError(STTError):
 
 def _decode_audio(audio: bytes):
     try:
+        import soundfile as sf
         import torch
         import torchaudio
     except ImportError as exc:
@@ -26,9 +27,13 @@ def _decode_audio(audio: bytes):
         ) from exc
 
     try:
-        waveform, sample_rate = torchaudio.load(io.BytesIO(audio))
-        if waveform.ndim == 2:
-            waveform = waveform.mean(dim=0)
+        samples, sample_rate = sf.read(
+            io.BytesIO(audio),
+            dtype="float32",
+            always_2d=True,
+        )
+        waveform = torch.from_numpy(samples).transpose(0, 1).contiguous()
+        waveform = waveform.mean(dim=0)
         if sample_rate != 16_000:
             waveform = torchaudio.functional.resample(
                 waveform,
