@@ -56,6 +56,7 @@ def load_whisper_lora_transcriber(
     except Exception as exc:
         raise STTModelLoadError(
             f"Whisper LoRA 모델을 로드하지 못했습니다: {selected_adapter}"
+            f" ({type(exc).__name__}: {exc})"
         ) from exc
 
     return WhisperLoRATranscriber(

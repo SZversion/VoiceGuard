@@ -59,8 +59,11 @@ def test_loader_wraps_model_loading_failure():
     def failing_base_factory(model_id):
         raise RuntimeError("model unavailable")
 
-    with pytest.raises(STTModelLoadError):
+    with pytest.raises(STTModelLoadError) as error_info:
         load_whisper_lora_transcriber(
             processor_factory=lambda model_id: FakeProcessor(),
             base_model_factory=failing_base_factory,
         )
+
+    assert "model unavailable" in str(error_info.value)
+    assert isinstance(error_info.value.__cause__, RuntimeError)
