@@ -12,17 +12,16 @@ def test_analyze_creates_job_when_analyzer_is_injected():
     app.state.analyzer = TestAnalyzer()
 
     try:
-        with TestClient(app) as client:
-            response = client.post(
-                "/api/analyze",
-                files={
-                    "audio": (
-                        "call.wav",
-                        BytesIO(b"RIFF" + b"\x00" * 4 + b"WAVE" + b"\x00" * 8),
-                        "audio/wav",
-                    )
-                },
-            )
+        response = TestClient(app).post(
+            "/api/analyze",
+            files={
+                "audio": (
+                    "call.wav",
+                    BytesIO(b"RIFF" + b"\x00" * 4 + b"WAVE" + b"\x00" * 8),
+                    "audio/wav",
+                )
+            },
+        )
     finally:
         app.state.analyzer = None
 
