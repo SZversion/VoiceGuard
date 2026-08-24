@@ -19,6 +19,7 @@ def test_status_returns_job_state_without_sensitive_fields():
         "job_id": job.job_id,
         "status": "running",
         "stage": "transcribing",
+        "progress": 30,
     }
 
 
