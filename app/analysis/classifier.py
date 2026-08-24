@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from math import exp
 from typing import Any
 
+from app.analysis.chunking import chunk_text_by_tokens
+
 
 LABELS = {
     0: "normal",
@@ -49,6 +51,10 @@ class TextClassifier:
             label_id=label_id,
             suspicion_score=probabilities[1],
         )
+
+    def classify_chunks(self, transcript: str) -> list[tuple[str, ClassifierOutput]]:
+        chunks = chunk_text_by_tokens(transcript, self.tokenizer, self.max_length)
+        return [(chunk, self.classify(chunk)) for chunk in chunks]
 
     @staticmethod
     def _as_logits(logits: Any) -> list[float]:
