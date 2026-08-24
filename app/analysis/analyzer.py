@@ -2,6 +2,7 @@ from collections.abc import Awaitable, Callable, Mapping
 from typing import Protocol
 
 from app.analysis.classifier import TextClassifier
+from app.analysis.text_normalizer import normalize_finance_text
 
 
 class Transcriber(Protocol):
@@ -37,7 +38,7 @@ class VoicePhishingAnalyzer:
         transcript = await self._transcribe(audio)
 
         report_stage("normalizing")
-        normalized_transcript = transcript
+        normalized_transcript = normalize_finance_text(transcript)
 
         report_stage("classifying")
         result = self.classifier.classify(normalized_transcript)
