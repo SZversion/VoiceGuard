@@ -64,6 +64,26 @@ def test_runtime_keeps_analyzer_unavailable_when_stt_loading_fails():
     assert test_app.state.analyzer is None
 
 
+def test_runtime_logs_loader_failure_without_exposing_hf_token(caplog):
+    def failing_stt_loader():
+        raise RuntimeError("download failed with token hf_secret_value")
+
+    test_app = create_app(
+        stt_loader=failing_stt_loader,
+        classifier_loader=FakeClassifier,
+    )
+
+    with caplog.at_level("ERROR"):
+        with TestClient(test_app):
+            pass
+
+    assert "stt" in caplog.text
+    assert "RuntimeError" in caplog.text
+    assert "download failed" in caplog.text
+    assert "hf_secret_value" not in caplog.text
+    assert "[REDACTED]" in caplog.text
+
+
 def test_runtime_keeps_analyzer_unavailable_when_classifier_loading_fails():
     def failing_classifier_loader():
         raise RuntimeError("classifier unavailable")

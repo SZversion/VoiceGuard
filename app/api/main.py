@@ -1,4 +1,6 @@
+import logging
 import os
+import re
 from collections.abc import Callable
 from contextlib import asynccontextmanager
 
@@ -18,6 +20,18 @@ from app.core.request_controls import DuplicateJobLock, IpHasher, RateLimiter
 from app.jobs.cleanup import TempDataStore
 from app.jobs.registry import JobRegistry
 from app.jobs.task_registry import JobTaskRegistry
+
+
+logger = logging.getLogger(__name__)
+
+
+def _redact_loader_error(message: str) -> str:
+    redacted = re.sub(r"\bhf_[A-Za-z0-9_-]+\b", "[REDACTED]", message)
+    for token_name in ("HF_TOKEN", "HUGGINGFACE_HUB_TOKEN"):
+        token = os.getenv(token_name)
+        if token:
+            redacted = redacted.replace(token, "[REDACTED]")
+    return redacted
 
 
 def _allowed_origins() -> list[str]:
@@ -44,7 +58,13 @@ def _load_component(
 ) -> None:
     try:
         setattr(app.state, state_name, loader())
-    except Exception:
+    except Exception as exc:
+        logger.error(
+            "Model component load failed: %s (%s): %s",
+            status_name,
+            type(exc).__name__,
+            _redact_loader_error(str(exc)),
+        )
         setattr(app.state, state_name, None)
         app.state.model_status[status_name] = "error"
         return
