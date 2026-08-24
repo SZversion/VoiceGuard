@@ -18,7 +18,7 @@ def get_status(request: Request, job_id: str):
     job, error = _job_or_error(request, job_id)
     if error:
         return error
-    return {"job_id": job.job_id, "status": job.status, "stage": job.stage}
+    return {"job_id": job.job_id, "status": job.status, "stage": job.stage, "progress": job.progress}
 
 
 @router.get("/analyze/{job_id}/result", summary="Get completed analysis result")

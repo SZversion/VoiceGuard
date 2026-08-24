@@ -31,7 +31,7 @@ class JobRunner:
         try:
             self.registry.update(job_id, status="running", stage="preprocessing")
             result = await asyncio.wait_for(
-                self.analyzer.analyze(audio),
+                self._analyze(job_id, audio),
                 timeout=self.timeout_seconds,
             )
             job = self.registry.get(job_id)
@@ -61,7 +61,7 @@ class JobRunner:
                 stage="failed",
                 error={
                     "error_code": "ANALYSIS.FAILED",
-                    "message": "분석 중 오류가 발생했습니다.",
+                    "message": "\ubd84\uc11d \uc911 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4.",
                 },
             )
         finally:
@@ -71,3 +71,13 @@ class JobRunner:
                 self.job_lock.release(self.owner_key, job_id)
             if self.task_registry is not None:
                 self.task_registry.remove(job_id)
+
+    async def _analyze(self, job_id: str, audio: bytes):
+        progress_analyze = getattr(self.analyzer, "analyze_with_progress", None)
+        if progress_analyze is None:
+            return await self.analyzer.analyze(audio)
+
+        def report_stage(stage: str) -> None:
+            self.registry.update(job_id, status="running", stage=stage)
+
+        return await progress_analyze(audio, report_stage)
