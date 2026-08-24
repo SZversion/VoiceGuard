@@ -17,13 +17,27 @@ const isLoading = ref(!analysisStore.hasResult)
 
 const jobId = computed(() => String(route.query.job_id || analysisStore.currentJobId || ''))
 const resultData = computed(() => analysisStore.result?.result || analysisStore.result || {})
-const score = computed(() => Number(resultData.value.score ?? resultData.value.risk_score ?? 0))
+const score = computed(() => {
+  const directScore = resultData.value.score ?? resultData.value.risk_score
+  const rawScore = directScore ?? resultData.value.suspicion_score
+  const numericScore = Number(rawScore ?? 0)
+
+  if (!Number.isFinite(numericScore)) return 0
+  if (directScore == null) return Math.round(numericScore * 10000) / 100
+  return numericScore
+})
 const label = computed(() => resultData.value.label || (score.value >= 50 ? '보이스피싱 의심' : '정상 통화'))
 const isSuspicious = computed(() => label.value.includes('의심') || score.value >= 50)
 const riskLevel = computed(() => Number(resultData.value.risk_level || (isSuspicious.value ? 5 : 1)))
 const riskLabel = computed(() => resultData.value.risk_level_label || (isSuspicious.value ? '매우 높음' : '낮음'))
-const segments = computed(() => Array.isArray(resultData.value.segments) ? resultData.value.segments.slice(0, 3) : [])
-const advice = computed(() => Array.isArray(resultData.value.advice) ? resultData.value.advice : [])
+const segments = computed(() => {
+  const source = resultData.value.segments ?? resultData.value.reference_segments
+  return Array.isArray(source) ? source.slice(0, 3) : []
+})
+const advice = computed(() => {
+  if (Array.isArray(resultData.value.advice)) return resultData.value.advice
+  return resultData.value.guidance ? [resultData.value.guidance] : []
+})
 
 async function loadResult() {
   if (analysisStore.hasResult && analysisStore.currentJobId === jobId.value) {

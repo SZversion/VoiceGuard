@@ -1,9 +1,11 @@
 import { defineStore } from 'pinia'
+import { markRaw } from 'vue'
 
 export const useAnalysisStore = defineStore('analysis', {
   state: () => ({
     currentJobId: '',
-    result: null
+    result: null,
+    selectedFile: null
   }),
 
   getters: {
@@ -11,6 +13,12 @@ export const useAnalysisStore = defineStore('analysis', {
   },
 
   actions: {
+    setSelectedFile(file) {
+      this.currentJobId = ''
+      this.result = null
+      this.selectedFile = file ? markRaw(file) : null
+    },
+
     setJobId(jobId) {
       const nextJobId = String(jobId || '')
       if (this.currentJobId !== nextJobId) {
@@ -27,6 +35,7 @@ export const useAnalysisStore = defineStore('analysis', {
     clear() {
       this.currentJobId = ''
       this.result = null
+      this.selectedFile = null
     }
   }
 })
