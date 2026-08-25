@@ -2,7 +2,8 @@
 faster-whisper
 
 # Whisper LoRA fine-tuning and evaluation
-transformers
+transformers==4.44.2
+torch==2.4.1
 datasets
 peft
 accelerate

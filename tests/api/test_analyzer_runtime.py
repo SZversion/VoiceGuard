@@ -137,21 +137,20 @@ def test_analyze_remains_unavailable_when_runtime_is_not_ready():
 
     assert response.status_code == 503
     assert response.json()["error_code"] == "MODEL.NOT_READY"
-def test_default_runtime_uses_onnx_classifier_loader(monkeypatch):
+def test_default_runtime_uses_pytorch_classifier_loader(monkeypatch):
     calls = []
 
-    def fake_onnx_loader():
-        calls.append("onnx")
+    def fake_pytorch_loader():
+        calls.append("pytorch")
         return FakeClassifier()
 
     import app.api.main as main_module
 
-    monkeypatch.delenv("CLASSIFIER_BACKEND", raising=False)
-    monkeypatch.setattr(main_module, "load_onnx_classifier", fake_onnx_loader)
+    monkeypatch.setattr(main_module, "load_text_classifier", fake_pytorch_loader)
     test_app = main_module.create_app(stt_loader=FakeTranscriber)
 
     with TestClient(test_app) as client:
         response = client.get("/api/model-status")
 
-    assert calls == ["onnx"]
+    assert calls == ["pytorch"]
     assert response.json()["analyzable"] is True
