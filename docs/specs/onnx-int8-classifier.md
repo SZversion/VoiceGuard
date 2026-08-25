@@ -1,3 +1,4 @@
+> Status: 이 문서는 ONNX INT8 구현 사양을 보존한다. 현재 `SJH30/fix/pytorch-classifier-runtime` 브랜치에서는 score 비교를 위해 FastAPI 기본 runtime을 PyTorch loader로 임시 롤백한다.
 # Spec — ONNX INT8 KoELECTRA 분류기
 
 ## Why
