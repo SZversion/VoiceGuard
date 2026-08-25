@@ -75,11 +75,23 @@ function toResponse(job, now = Date.now()) {
   job.status = status
   job.progress = progress
 
+  const totalChunks = 4
+  const completedChunks = stage === 'completed'
+    ? totalChunks
+    : Math.min(totalChunks, Math.max(0, Math.floor(progress / 25)))
+
   return {
     job_id: job.jobId,
     status,
     stage,
     progress,
+    progress_details: {
+      stage,
+      transcribed_chunks: completedChunks,
+      normalized_chunks: completedChunks,
+      classified_chunks: completedChunks,
+      total_chunks: totalChunks
+    },
     estimated_seconds: Math.max(0, Math.ceil(14 - elapsedSeconds)),
     file_name: job.fileName,
     file_size: job.fileSize,

@@ -56,7 +56,7 @@ http://localhost:3000
 `frontend/.env` 파일에 다음 값을 설정할 수 있습니다.
 
 ```env
-NUXT_PUBLIC_USE_MOCK=true
+NUXT_PUBLIC_USE_MOCK=false
 NUXT_PUBLIC_API_BASE=http://localhost:8000
 ```
 

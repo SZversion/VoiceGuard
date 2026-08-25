@@ -9,7 +9,7 @@ export function useAnalysisApi() {
 
     const formData = new FormData()
     formData.append('audio', file)
-    return $fetch('/analyze', {
+    return $fetch('/api/analyze', {
       method: 'POST',
       baseURL: config.public.apiBase,
       body: formData
@@ -18,12 +18,12 @@ export function useAnalysisApi() {
 
   async function getAnalysisStatus(jobId) {
     if (config.public.useMock) return getMockAnalysisStatus(jobId)
-    return $fetch(`/analyze/${encodeURIComponent(jobId)}/status`, { baseURL: config.public.apiBase })
+    return $fetch(`/api/analyze/${encodeURIComponent(jobId)}/status`, { baseURL: config.public.apiBase })
   }
 
   async function cancelAnalysis(jobId) {
     if (config.public.useMock) return cancelMockAnalysis(jobId)
-    return $fetch(`/analyze/${encodeURIComponent(jobId)}`, {
+    return $fetch(`/api/analyze/${encodeURIComponent(jobId)}`, {
       method: 'DELETE',
       baseURL: config.public.apiBase
     })
@@ -31,7 +31,7 @@ export function useAnalysisApi() {
 
   async function getAnalysisResult(jobId) {
     if (config.public.useMock) return getMockAnalysisResult(jobId)
-    return $fetch(`/analyze/${encodeURIComponent(jobId)}/result`, { baseURL: config.public.apiBase })
+    return $fetch(`/api/analyze/${encodeURIComponent(jobId)}/result`, { baseURL: config.public.apiBase })
   }
 
   return {

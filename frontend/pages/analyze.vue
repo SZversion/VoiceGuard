@@ -27,18 +27,31 @@ const analysis = ref(null)
 const errorMessage = ref('')
 const isLoading = ref(true)
 const isCancelling = ref(false)
+const progress = ref(0)
 let pollTimer = null
 
 const terminalStatuses = ['completed', 'failed', 'cancelled']
 const status = computed(() => analysis.value?.status || 'queued')
 const isTerminal = computed(() => terminalStatuses.includes(status.value))
 const steps = computed(() => analysis.value?.steps?.length ? analysis.value.steps : defaultSteps)
-const progress = computed(() => Number(analysis.value?.progress || 0))
+const progressDetails = computed(() => analysis.value?.progress_details || null)
+const totalChunks = computed(() => Number(
+  progressDetails.value?.total_chunks ?? analysis.value?.total_chunks ?? 0
+))
+const completedChunks = computed(() => Number(
+  progressDetails.value?.completed_chunks
+    ?? progressDetails.value?.classified_chunks
+    ?? analysis.value?.completed_chunks
+    ?? 0
+))
 const currentStage = computed(() => analysis.value?.stage || 'queued')
 const currentStepElement = ref(null)
 
 watch(jobId, (nextJobId) => {
-  if (nextJobId) analysisStore.setJobId(nextJobId)
+  if (nextJobId) {
+    progress.value = 0
+    analysisStore.setJobId(nextJobId)
+  }
 }, { immediate: true })
 
 const statusLabel = computed(() => ({
@@ -79,6 +92,25 @@ function stepState(step) {
   return 'pending'
 }
 
+function calculateProgress(response) {
+  const stageProgress = Math.min(100, Math.max(0, Number(response?.progress || 0)))
+  if (response?.status === 'completed') return 100
+
+  const details = response?.progress_details
+  const total = Number(details?.total_chunks ?? response?.total_chunks ?? 0)
+  if (!details || total <= 0) return stageProgress
+
+  const completed = Math.min(total, Math.max(0, Number(
+    details.completed_chunks ?? details.classified_chunks ?? response.completed_chunks ?? 0
+  )))
+  return Math.min(100, Math.round(((completed + stageProgress / 100) / total) * 100))
+}
+
+function applyStatusResponse(response) {
+  analysis.value = response
+  progress.value = Math.max(progress.value, calculateProgress(response))
+}
+
 function stopPolling() {
   if (pollTimer) {
     clearInterval(pollTimer)
@@ -95,7 +127,7 @@ async function loadStatus() {
 
   try {
     const response = await getAnalysisStatus(jobId.value)
-    analysis.value = response
+    applyStatusResponse(response)
     errorMessage.value = ''
     if (response.status === 'completed') {
       stopPolling()
@@ -121,7 +153,7 @@ async function handleCancel() {
 
   isCancelling.value = true
   try {
-    analysis.value = await cancelAnalysis(jobId.value)
+    applyStatusResponse(await cancelAnalysis(jobId.value))
     stopPolling()
   } catch {
     errorMessage.value = '분석을 취소하지 못했습니다. 잠시 후 다시 시도해주세요.'
@@ -196,7 +228,8 @@ onBeforeUnmount(stopPolling)
         <div class="mt-3 flex justify-between gap-4 text-sm text-slate-500">
           <span v-if="analysis?.estimated_seconds && !isTerminal">예상 완료 시간 {{ Math.floor(analysis.estimated_seconds / 60).toString().padStart(2, '0') }}:{{ (analysis.estimated_seconds % 60).toString().padStart(2, '0') }}</span>
           <span v-else>{{ statusLabel }}</span>
-          <span class="hidden sm:block">분석 시간은 통화 길이와 내용에 따라 달라질 수 있습니다.</span>
+          <span v-if="totalChunks > 0">청크 {{ Math.min(completedChunks, totalChunks) }}/{{ totalChunks }}</span>
+          <span v-else class="hidden sm:block">분석 시간은 통화 길이와 내용에 따라 달라질 수 있습니다.</span>
         </div>
 
         <div class="mt-8 border-t border-slate-100 pt-6">

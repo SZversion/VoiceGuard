@@ -130,7 +130,7 @@ onMounted(loadResult)
           <article v-for="segment in segments" :key="`${segment.start_time}-${segment.text}`" class="grid gap-3 px-6 py-5 sm:grid-cols-[9rem_1fr]">
             <p class="font-bold text-blue-600">{{ segment.start_time || segment.start || '-' }}</p>
             <div>
-              <p class="font-bold text-slate-800">“{{ segment.text || segment.content || '-' }}”</p>
+              <p class="font-bold text-slate-800">“{{ segment.text || segment.transcript || segment.content || '-' }}”</p>
               <p v-if="segment.reason" class="mt-1 text-sm text-slate-500">{{ segment.reason }}</p>
             </div>
           </article>
