@@ -7,7 +7,7 @@
 - **문제**:
   1. 텍스트 청크가 많을 때 CPU 분류 추론 시간이 길어질 수 있다.
   2. Railway 메모리 사용량을 줄일 수 있는 ONNX INT8 변환본이 이미 존재하지만 API runtime에는 연결되어 있지 않다.
-  3. 모델 교체 시 기존 PyTorch 모델과 API 계약을 깨지 않고 되돌릴 수 있어야 한다.
+  3. 모델 교체 시 기존 API 계약과 analyzer 인터페이스를 유지해야 한다.
 - **측정 지표**: 동일 입력에 대한 label 일치율, suspicion score 차이, warm inference latency.
 
 ## Goal
@@ -18,7 +18,7 @@
   - 라벨 매핑 `0=normal`, `1=voice_phishing`을 유지한다.
   - 빈 텍스트 입력을 기존과 동일하게 거부한다.
   - 모델 로더 오류가 `ModelLoadError`로 변환된다.
-  - 기존 PyTorch loader를 유지하여 fallback이 가능하다.
+  - FastAPI runtime이 ONNX INT8 loader만 사용한다.
 - **Out of Scope**: 분류 threshold 변경, STT 변경, batch inference, API response schema 변경, Railway 기본 모델 전환 전의 성능 결론.
 
 ## What
@@ -38,7 +38,7 @@
 | EC-02 | ONNX 파일 또는 tokenizer 누락 | `ModelLoadError` 반환 |
 | EC-03 | 지원하지 않는 ONNX 입력 이름 | 로더/추론 오류를 `ModelLoadError` 또는 runtime 오류로 명확히 보고 |
 | EC-04 | logits class 수가 2개가 아님 | `ValueError` 반환 |
-| EC-05 | ONNX 초기화 실패 | 기존 PyTorch loader를 선택할 수 있도록 기존 loader 보존 |
+| EC-05 | ONNX 초기화 실패 | `ModelLoadError`를 기록하고 runtime을 not analyzable 상태로 둔다 |
 
 ## How
 
@@ -51,7 +51,7 @@
 - 라벨: `0=normal`, `1=voice_phishing`
 - dependency: `onnxruntime`
 - 기존 `TextClassifier`의 API 계약과 `ClassifierOutput`을 변경하지 않는다.
-- PyTorch loader는 기본 fallback/비교 대상으로 남겨 둔다.
+- FastAPI runtime에서는 PyTorch loader를 사용하지 않는다.
 
 ## AC (Given-When-Then)
 
@@ -73,11 +73,11 @@
 - WHEN: `classify()`를 호출
 - THEN: 지원하지 않는 class id 오류를 반환한다.
 
-**AC-04 · 기존 PyTorch fallback 보존**
+**AC-04 · ONNX runtime 선택**
 
-- GIVEN: 기존 `load_text_classifier()` 호출
-- WHEN: PyTorch loader를 실행
-- THEN: 기존 `TextClassifier` 생성 경로가 변경되지 않는다.
+- GIVEN: FastAPI startup
+- WHEN: runtime이 classifier를 초기화
+- THEN: ONNX INT8 loader가 사용되고 `model-status`가 ready가 된다.
 
 **AC-05 · chunking 호환**
 
