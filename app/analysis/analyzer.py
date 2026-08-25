@@ -1,7 +1,7 @@
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Protocol
 
-from app.analysis.classifier import TextClassifier
+from app.analysis.classifier import ClassifierOutput, TextClassifier
 from app.analysis.text_normalizer import normalize_finance_text
 
 
@@ -41,7 +41,12 @@ class VoicePhishingAnalyzer:
         normalized_transcript = normalize_finance_text(transcript)
 
         report_stage("classifying")
-        result = self.classifier.classify(normalized_transcript)
+        classify_chunks = getattr(self.classifier, "classify_chunks", None)
+        if classify_chunks is None:
+            result = self.classifier.classify(normalized_transcript)
+        else:
+            chunk_results = classify_chunks(normalized_transcript)
+            result = self._aggregate_chunk_results(chunk_results)
 
         report_stage("risk_search")
         reference_segments = []
@@ -53,6 +58,23 @@ class VoicePhishingAnalyzer:
             "reference_segments": reference_segments,
             "guidance": self.guidance,
         }
+
+    @staticmethod
+    def _aggregate_chunk_results(
+        chunk_results: list[tuple[str, ClassifierOutput]],
+    ) -> ClassifierOutput:
+        if not chunk_results:
+            raise ValueError("chunk classification returned no results")
+
+        suspicion_score = max(result.suspicion_score for _, result in chunk_results)
+        is_voice_phishing = any(
+            result.label == "voice_phishing" for _, result in chunk_results
+        )
+        return ClassifierOutput(
+            label="voice_phishing" if is_voice_phishing else "normal",
+            label_id=1 if is_voice_phishing else 0,
+            suspicion_score=suspicion_score,
+        )
 
     async def _transcribe(self, audio: bytes) -> str:
         if hasattr(self.transcriber, "transcribe"):
