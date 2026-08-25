@@ -22,7 +22,7 @@ class FakeAdapterModel:
         return self
 
 
-def test_loader_applies_adapter_to_requested_base_model():
+def test_loader_applies_adapter_to_requested_base_model(monkeypatch):
     processor_calls = []
     base_calls = []
     base_models = []
@@ -42,6 +42,9 @@ def test_loader_applies_adapter_to_requested_base_model():
         adapter_calls.append((base_model, adapter_model))
         return FakeAdapterModel()
 
+    monkeypatch.setenv("STT_MAX_NEW_TOKENS", "64")
+    monkeypatch.setenv("STT_AUDIO_CHUNK_SECONDS", "30")
+
     transcriber = load_whisper_lora_transcriber(
         processor_factory=processor_factory,
         base_model_factory=base_factory,
@@ -53,6 +56,8 @@ def test_loader_applies_adapter_to_requested_base_model():
     assert adapter_calls == [(base_models[0], ADAPTER_MODEL)]
     assert transcriber.processor.__class__ is FakeProcessor
     assert transcriber.model.__class__ is FakeAdapterModel
+    assert transcriber.max_new_tokens == 64
+    assert transcriber.chunk_seconds == 30.0
 
 
 def test_loader_wraps_model_loading_failure():
