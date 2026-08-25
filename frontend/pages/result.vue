@@ -34,9 +34,16 @@ const segments = computed(() => {
   const source = resultData.value.segments ?? resultData.value.reference_segments
   return Array.isArray(source) ? source.slice(0, 3) : []
 })
+const defaultAdvice = [
+  '어떤 이유로도 현금 이체나 계좌이체를 하지 마세요.',
+  '의심되는 경우 말을 잇지 말고 즉시 전화를 끊으세요.',
+  '공식 기관의 대표번호로 직접 연락해서 사실 여부를 확인하세요.'
+]
 const advice = computed(() => {
-  if (Array.isArray(resultData.value.advice)) return resultData.value.advice
-  return resultData.value.guidance ? [resultData.value.guidance] : []
+  if (Array.isArray(resultData.value.advice) && resultData.value.advice.length) {
+    return resultData.value.advice
+  }
+  return defaultAdvice
 })
 
 async function loadResult() {
