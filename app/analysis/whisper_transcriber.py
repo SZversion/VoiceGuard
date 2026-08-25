@@ -90,6 +90,12 @@ class WhisperLoRATranscriber:
             raise TranscriptionError("speech transcription failed") from exc
 
     async def transcribe_chunks(self, audio: bytes) -> list[TranscriptChunk]:
+        return [
+            transcript_chunk
+            async for _, _, transcript_chunk in self.transcribe_chunks_stream(audio)
+        ]
+
+    async def transcribe_chunks_stream(self, audio: bytes):
         if not audio:
             raise AudioInputError("audio must not be empty")
 
@@ -98,23 +104,23 @@ class WhisperLoRATranscriber:
                 self.audio_splitter,
                 audio,
             )
-            transcripts = []
-            for chunk in chunks:
+            total = len(chunks)
+            for index, chunk in enumerate(chunks, start=1):
                 chunk_audio = chunk.audio
                 if not isinstance(chunk_audio, bytes):
                     chunk_audio = encode_wav_chunk(chunk, 16_000)
                 transcript = await self.transcribe(chunk_audio)
-                transcripts.append(
-                    TranscriptChunk(chunk.start, chunk.end, transcript)
+                yield index, total, TranscriptChunk(
+                    chunk.start,
+                    chunk.end,
+                    transcript,
                 )
-            return transcripts
         except (AudioInputError, TranscriptionError):
             raise
         except Exception as exc:
             raise TranscriptionError(
                 f"audio chunk transcription failed ({type(exc).__name__}: {exc})"
             ) from exc
-
     def _transcribe_sync(self, audio: bytes) -> str:
         try:
             waveform, sample_rate = self.decoder(audio)

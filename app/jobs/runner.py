@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import logging
 
 from app.analysis.interfaces import Analyzer
@@ -80,4 +81,45 @@ class JobRunner:
         def report_stage(stage: str) -> None:
             self.registry.update(job_id, status="running", stage=stage)
 
+        def report_progress(details: dict[str, int | str]) -> None:
+            total = int(details.get("total_chunks", 0))
+            completed = int(details.get("classified_chunks", 0))
+            stage = str(details.get("stage", "classifying"))
+            stage_order = {
+                "queued": 0,
+                "preprocessing": 1,
+                "transcribing": 2,
+                "normalizing": 3,
+                "classifying": 4,
+                "risk_search": 5,
+                "finalizing": 6,
+                "completed": 7,
+            }
+            job = self.registry.get(job_id)
+            current_stage = job.stage if job is not None else stage
+            effective_stage = stage
+            if stage_order.get(stage, 0) < stage_order.get(current_stage, 0):
+                effective_stage = current_stage
+            if total <= 0:
+                progress = job.progress if job is not None else 0
+            elif stage == "transcribing":
+                progress = 30 + round(5 * int(details.get("transcribed_chunks", 0)) / total)
+            elif stage == "normalizing":
+                progress = 45 + round(5 * int(details.get("normalized_chunks", 0)) / total)
+            else:
+                progress = 65 + round(15 * completed / total)
+            progress = max(progress, job.progress if job is not None else progress)
+            metadata = dict(details)
+            metadata["stage"] = effective_stage
+            self.registry.update(
+                job_id,
+                status="running",
+                stage=effective_stage,
+                progress=progress,
+                metadata=metadata,
+            )
+
+        parameters = inspect.signature(progress_analyze).parameters
+        if "report_progress" in parameters:
+            return await progress_analyze(audio, report_stage, report_progress)
         return await progress_analyze(audio, report_stage)

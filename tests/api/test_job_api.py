@@ -23,6 +23,34 @@ def test_status_returns_job_state_without_sensitive_fields():
     }
 
 
+def test_status_includes_chunk_progress_details_when_available():
+    job = app.state.job_registry.create(owner_key="hashed-ip")
+    app.state.job_registry.update(
+        job.job_id,
+        status="running",
+        stage="classifying",
+        progress=70,
+        metadata={
+            "stage": "classifying",
+            "transcribed_chunks": 3,
+            "normalized_chunks": 3,
+            "classified_chunks": 1,
+            "total_chunks": 3,
+        },
+    )
+
+    response = TestClient(app).get(f"/api/analyze/{job.job_id}/status")
+
+    assert response.status_code == 200
+    assert response.json()["progress_details"] == {
+        "stage": "classifying",
+        "transcribed_chunks": 3,
+        "normalized_chunks": 3,
+        "classified_chunks": 1,
+        "total_chunks": 3,
+    }
+
+
 def test_result_returns_completed_result():
     job = app.state.job_registry.create(owner_key="hashed-ip")
     app.state.job_registry.update(

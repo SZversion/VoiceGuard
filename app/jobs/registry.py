@@ -64,6 +64,7 @@ class JobRegistry:
         progress: int | None = None,
         result: dict | None = None,
         error: dict | None = None,
+        metadata: dict | None = None,
     ) -> JobRecord:
         if status not in STATUSES or stage not in STAGES:
             raise InvalidJobTransition("Unknown job status or stage")
@@ -88,6 +89,8 @@ class JobRegistry:
             job.progress = next_progress
             job.result = result if status == "completed" else None
             job.error = error if status == "failed" else None
+            if metadata is not None:
+                job.metadata = dict(metadata)
             return job
 
     def cancel(self, job_id: str) -> bool:
