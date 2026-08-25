@@ -50,3 +50,33 @@ def test_legacy_analyzer_still_completes_with_progress():
     completed = registry.get(job.job_id)
     assert completed.status == "completed"
     assert completed.progress == 100
+
+
+def test_streaming_analyzer_reports_chunk_progress_to_job_registry():
+    class StreamingAnalyzer:
+        async def analyze_with_progress(self, audio, report_stage, report_progress):
+            report_stage("transcribing")
+            report_progress({
+                "stage": "classifying",
+                "transcribed_chunks": 2,
+                "normalized_chunks": 2,
+                "classified_chunks": 1,
+                "total_chunks": 3,
+            })
+            return {"label": "normal"}
+
+    registry = JobRegistry()
+    job = registry.create(owner_key="test-owner")
+
+    asyncio.run(JobRunner(registry, StreamingAnalyzer()).run(job.job_id, b"audio"))
+
+    completed = registry.get(job.job_id)
+    assert completed.status == "completed"
+    assert completed.progress > 65
+    assert completed.metadata == {
+        "stage": "classifying",
+        "transcribed_chunks": 2,
+        "normalized_chunks": 2,
+        "classified_chunks": 1,
+        "total_chunks": 3,
+    }

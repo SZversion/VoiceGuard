@@ -1,3 +1,6 @@
+import asyncio
+import logging
+import time
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Protocol
 
@@ -12,6 +15,9 @@ class Transcriber(Protocol):
 
 
 StageReporter = Callable[[str], None]
+
+
+logger = logging.getLogger(__name__)
 
 
 class VoicePhishingAnalyzer:
@@ -34,7 +40,14 @@ class VoicePhishingAnalyzer:
         self,
         audio: bytes,
         report_stage: StageReporter,
+        report_progress: Callable[[dict[str, int | str]], None] | None = None,
     ) -> Mapping[str, object]:
+        transcribe_stream = getattr(self.transcriber, "transcribe_chunks_stream", None)
+        if transcribe_stream is not None:
+            return await self._analyze_streaming_chunks(
+                audio, report_stage, transcribe_stream, report_progress
+            )
+
         transcribe_chunks = getattr(self.transcriber, "transcribe_chunks", None)
         if transcribe_chunks is not None:
             return await self._analyze_audio_chunks(
@@ -47,6 +60,121 @@ class VoicePhishingAnalyzer:
         transcript = await self._transcribe(audio)
         return self._classify_single_transcript(transcript, report_stage)
 
+    async def _analyze_streaming_chunks(
+        self,
+        audio: bytes,
+        report_stage: StageReporter,
+        transcribe_stream,
+        report_progress: Callable[[dict[str, int | str]], None] | None,
+    ) -> Mapping[str, object]:
+        report_stage("transcribing")
+        queue: asyncio.Queue = asyncio.Queue(maxsize=1)
+        sentinel = object()
+        scored_chunks: list[tuple[TranscriptChunk, ClassifierOutput]] = []
+
+        async def produce() -> None:
+            async for item in transcribe_stream(audio):
+                await queue.put(item)
+            await queue.put(sentinel)
+
+        async def consume() -> None:
+            transcribed = 0
+            normalized = 0
+            classified = 0
+            total = 0
+            while True:
+                item = await queue.get()
+                if item is sentinel:
+                    break
+                index, total, transcript_chunk = item
+                transcribed = index
+                logger.info("[transcribing] chunk %s/%s completed", index, total)
+                if report_progress is not None:
+                    report_progress({
+                        "stage": "transcribing",
+                        "transcribed_chunks": transcribed,
+                        "normalized_chunks": normalized,
+                        "classified_chunks": classified,
+                        "total_chunks": total,
+                    })
+                normalized_transcript = normalize_finance_text(
+                    transcript_chunk.transcript
+                )
+                normalized += 1
+                if report_progress is not None:
+                    report_progress({
+                        "stage": "normalizing",
+                        "transcribed_chunks": transcribed,
+                        "normalized_chunks": normalized,
+                        "classified_chunks": classified,
+                        "total_chunks": total,
+                    })
+                logger.info("[classifying] chunk %s/%s started", index, total)
+                started_at = time.perf_counter()
+                result = await asyncio.to_thread(
+                    self._classify_transcript,
+                    normalized_transcript,
+                )
+                logger.info(
+                    "[classifying] chunk %s/%s completed latency_ms=%d",
+                    index,
+                    total,
+                    round((time.perf_counter() - started_at) * 1000),
+                )
+                classified += 1
+                scored_chunks.append((transcript_chunk, result))
+                if report_progress is not None:
+                    report_progress({
+                        "stage": "classifying",
+                        "transcribed_chunks": transcribed,
+                        "normalized_chunks": normalized,
+                        "classified_chunks": classified,
+                        "total_chunks": total,
+                    })
+
+        producer_task = asyncio.create_task(produce())
+        consumer_task = asyncio.create_task(consume())
+        try:
+            await asyncio.gather(producer_task, consumer_task)
+        finally:
+            for task in (producer_task, consumer_task):
+                if not task.done():
+                    task.cancel()
+            await asyncio.gather(
+                producer_task,
+                consumer_task,
+                return_exceptions=True,
+            )
+        if not scored_chunks:
+            raise ValueError("audio chunk transcription returned no results")
+
+        report_stage("risk_search")
+        ranked_chunks = sorted(
+            scored_chunks,
+            key=lambda item: item[1].suspicion_score,
+            reverse=True,
+        )
+        top_five = ranked_chunks[:5]
+        aggregated_score = sum(
+            result.suspicion_score for _, result in top_five
+        ) / len(top_five)
+        label = "voice_phishing" if aggregated_score >= 0.5 else "normal"
+
+        report_stage("finalizing")
+        return {
+            "label": label,
+            "suspicion_score": aggregated_score,
+            "reference_segments": [
+                {
+                    "start": chunk.start,
+                    "end": chunk.end,
+                    "transcript": normalize_finance_text(chunk.transcript),
+                    "suspicion_score": result.suspicion_score,
+                }
+                for chunk, result in ranked_chunks[:3]
+            ],
+            "guidance": self.guidance,
+        }
     async def _analyze_audio_chunks(
         self,
         audio: bytes,
