@@ -121,7 +121,7 @@ const processSteps = [
       </div>
 
       <NuxtLink
-        to="/"
+        to="/upload"
         class="inline-flex items-center justify-center gap-2 bg-blue-600 px-6 py-4 font-bold text-white shadow-sm transition hover:bg-blue-700"
       >
         <CloudArrowUpIcon class="h-6 w-6" aria-hidden="true" />
