@@ -3,6 +3,13 @@ import io
 from collections.abc import Callable
 from typing import Any
 
+from app.analysis.audio_chunking import (
+    AudioChunk,
+    TranscriptChunk,
+    encode_wav_chunk,
+    split_audio_bytes,
+)
+
 
 class STTError(RuntimeError):
     """Base error for Whisper transcription failures."""
@@ -58,12 +65,18 @@ class WhisperLoRATranscriber:
         decoder: Callable[[bytes], tuple[Any, int]] = _decode_audio,
         device: str = "cpu",
         max_new_tokens: int = 128,
+        chunk_seconds: float = 30.0,
+        audio_splitter=None,
     ):
         self.processor = processor
         self.model = model
         self.decoder = decoder
         self.device = device
         self.max_new_tokens = max_new_tokens
+        self.chunk_seconds = chunk_seconds
+        self.audio_splitter = audio_splitter or (
+            lambda audio: split_audio_bytes(audio, self.decoder, self.chunk_seconds)
+        )
 
     async def transcribe(self, audio: bytes) -> str:
         if not audio:
@@ -75,6 +88,32 @@ class WhisperLoRATranscriber:
             raise
         except Exception as exc:
             raise TranscriptionError("speech transcription failed") from exc
+
+    async def transcribe_chunks(self, audio: bytes) -> list[TranscriptChunk]:
+        if not audio:
+            raise AudioInputError("audio must not be empty")
+
+        try:
+            chunks: list[AudioChunk] = await asyncio.to_thread(
+                self.audio_splitter,
+                audio,
+            )
+            transcripts = []
+            for chunk in chunks:
+                chunk_audio = chunk.audio
+                if not isinstance(chunk_audio, bytes):
+                    chunk_audio = encode_wav_chunk(chunk, 16_000)
+                transcript = await self.transcribe(chunk_audio)
+                transcripts.append(
+                    TranscriptChunk(chunk.start, chunk.end, transcript)
+                )
+            return transcripts
+        except (AudioInputError, TranscriptionError):
+            raise
+        except Exception as exc:
+            raise TranscriptionError(
+                f"audio chunk transcription failed ({type(exc).__name__}: {exc})"
+            ) from exc
 
     def _transcribe_sync(self, audio: bytes) -> str:
         try:

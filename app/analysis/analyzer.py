@@ -1,6 +1,7 @@
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Protocol
 
+from app.analysis.audio_chunking import TranscriptChunk
 from app.analysis.classifier import ClassifierOutput, TextClassifier
 from app.analysis.text_normalizer import normalize_finance_text
 
@@ -34,19 +35,79 @@ class VoicePhishingAnalyzer:
         audio: bytes,
         report_stage: StageReporter,
     ) -> Mapping[str, object]:
+        transcribe_chunks = getattr(self.transcriber, "transcribe_chunks", None)
+        if transcribe_chunks is not None:
+            return await self._analyze_audio_chunks(
+                audio,
+                report_stage,
+                transcribe_chunks,
+            )
+
         report_stage("transcribing")
         transcript = await self._transcribe(audio)
+        return self._classify_single_transcript(transcript, report_stage)
 
+    async def _analyze_audio_chunks(
+        self,
+        audio: bytes,
+        report_stage: StageReporter,
+        transcribe_chunks,
+    ) -> Mapping[str, object]:
+        report_stage("transcribing")
+        transcript_chunks: list[TranscriptChunk] = await transcribe_chunks(audio)
+        scored_chunks: list[tuple[TranscriptChunk, ClassifierOutput]] = []
+
+        for transcript_chunk in transcript_chunks:
+            report_stage("normalizing")
+            normalized_transcript = normalize_finance_text(
+                transcript_chunk.transcript
+            )
+
+            report_stage("classifying")
+            result = self._classify_transcript(normalized_transcript)
+            scored_chunks.append((transcript_chunk, result))
+
+        if not scored_chunks:
+            raise ValueError("audio chunk transcription returned no results")
+
+        report_stage("risk_search")
+        ranked_chunks = sorted(
+            scored_chunks,
+            key=lambda item: item[1].suspicion_score,
+            reverse=True,
+        )
+        top_five = ranked_chunks[:5]
+        aggregated_score = sum(
+            result.suspicion_score for _, result in top_five
+        ) / len(top_five)
+        label = "voice_phishing" if aggregated_score >= 0.5 else "normal"
+
+        report_stage("finalizing")
+        return {
+            "label": label,
+            "suspicion_score": aggregated_score,
+            "reference_segments": [
+                {
+                    "start": chunk.start,
+                    "end": chunk.end,
+                    "transcript": normalize_finance_text(chunk.transcript),
+                    "suspicion_score": result.suspicion_score,
+                }
+                for chunk, result in ranked_chunks[:3]
+            ],
+            "guidance": self.guidance,
+        }
+
+    def _classify_single_transcript(
+        self,
+        transcript: str,
+        report_stage: StageReporter,
+    ) -> Mapping[str, object]:
         report_stage("normalizing")
         normalized_transcript = normalize_finance_text(transcript)
 
         report_stage("classifying")
-        classify_chunks = getattr(self.classifier, "classify_chunks", None)
-        if classify_chunks is None:
-            result = self.classifier.classify(normalized_transcript)
-        else:
-            chunk_results = classify_chunks(normalized_transcript)
-            result = self._aggregate_chunk_results(chunk_results)
+        result = self._classify_transcript(normalized_transcript)
 
         report_stage("risk_search")
         reference_segments = []
@@ -58,6 +119,14 @@ class VoicePhishingAnalyzer:
             "reference_segments": reference_segments,
             "guidance": self.guidance,
         }
+
+    def _classify_transcript(self, transcript: str) -> ClassifierOutput:
+        classify_chunks = getattr(self.classifier, "classify_chunks", None)
+        if classify_chunks is None:
+            return self.classifier.classify(transcript)
+
+        chunk_results = classify_chunks(transcript)
+        return self._aggregate_chunk_results(chunk_results)
 
     @staticmethod
     def _aggregate_chunk_results(

@@ -45,6 +45,7 @@ def load_whisper_lora_transcriber(
     )
     selected_device = device or os.getenv("STT_DEVICE", "cpu")
     selected_max_new_tokens = int(os.getenv("STT_MAX_NEW_TOKENS", "128"))
+    selected_chunk_seconds = float(os.getenv("STT_AUDIO_CHUNK_SECONDS", "30"))
 
     try:
         processor = (processor_factory or _processor_factory)(selected_base)
@@ -64,4 +65,6 @@ def load_whisper_lora_transcriber(
         processor,
         model,
         device=selected_device,
+        max_new_tokens=selected_max_new_tokens,
+        chunk_seconds=selected_chunk_seconds,
     )
