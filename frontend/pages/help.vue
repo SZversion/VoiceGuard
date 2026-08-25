@@ -131,7 +131,7 @@ const questions = [
             <span><span class="block text-xs text-slate-500">금융감독원</span><strong class="text-xl">1332</strong></span>
           </a>
         </div>
-        <NuxtLink to="/" class="mt-2 inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-3 font-bold text-white transition hover:bg-blue-700 md:mt-0">
+        <NuxtLink to="/upload" class="mt-2 inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-3 font-bold text-white transition hover:bg-blue-700 md:mt-0">
           <CloudArrowUpIcon class="h-5 w-5" aria-hidden="true" />
           통화 업로드로 이동
         </NuxtLink>
