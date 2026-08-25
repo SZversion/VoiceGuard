@@ -89,7 +89,7 @@ const processSteps = [
 
     <section class="flex flex-col gap-6 border border-blue-100 bg-blue-50 p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-5">
       <div class="flex items-center gap-4">
-        <img src="/icons/police_icon.png" alt="경찰 신고 안내" class="h-12 w-12 shrink-0 object-contain" />
+        <img src="/images/icons/police_icon.png" alt="경찰 신고 안내" class="h-12 w-12 shrink-0 object-contain" />
         <p class="max-w-[190px] text-base font-bold leading-6 text-slate-800">
           위험하거나 피해가 의심되는<br />
           경우 즉시 신고하세요.
