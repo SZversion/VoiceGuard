@@ -65,6 +65,12 @@ function goToUpload() {
   router.push('/upload')
 }
 
+function formatSuspicionScore(value) {
+  const numericScore = Number(value)
+  if (!Number.isFinite(numericScore)) return '-'
+  return `${(numericScore * 100).toFixed(2)}%`
+}
+
 function levelClass(level) {
   return level >= 4 ? 'bg-red-100 text-red-700' : level >= 3 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
 }
@@ -128,7 +134,7 @@ onMounted(loadResult)
         </div>
         <div v-if="segments.length" class="divide-y divide-slate-100">
           <article v-for="segment in segments" :key="`${segment.start_time}-${segment.text}`" class="grid gap-3 px-6 py-5 sm:grid-cols-[9rem_1fr]">
-            <p class="font-bold text-blue-600">{{ segment.start_time || segment.start || '-' }}</p>
+            <p class="font-bold text-blue-600">{{ formatSuspicionScore(segment.suspicion_score) }}</p>
             <div>
               <p class="font-bold text-slate-800">“{{ segment.text || segment.content || '-' }}”</p>
               <p v-if="segment.reason" class="mt-1 text-sm text-slate-500">{{ segment.reason }}</p>
