@@ -7,7 +7,8 @@
     "build": "nuxt build",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "lint": "nuxt prepare"
+    "lint": "nuxt prepare",
+    "generate-icons": "pwa-assets-generator --preset minimal-2023 public/images/icons/icon-512.png"
   },
   "dependencies": {
     "@heroicons/vue": "^2.2.0",
@@ -18,6 +19,8 @@
     "vue": "^3.4.0"
   },
   "devDependencies": {
+    "@vite-pwa/assets-generator": "^1.0.2",
+    "@vite-pwa/nuxt": "^1.1.1",
     "tailwindcss": "^3.4.17"
   }
 }
