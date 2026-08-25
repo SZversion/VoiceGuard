@@ -27,6 +27,7 @@ const analysis = ref(null)
 const errorMessage = ref('')
 const isLoading = ref(true)
 const isCancelling = ref(false)
+const isErrorModalOpen = ref(false)
 let pollTimer = null
 
 const terminalStatuses = ['completed', 'failed', 'cancelled']
@@ -36,6 +37,12 @@ const steps = computed(() => analysis.value?.steps?.length ? analysis.value.step
 const progress = computed(() => Number(analysis.value?.progress || 0))
 const currentStage = computed(() => analysis.value?.stage || 'queued')
 const currentStepElement = ref(null)
+
+watch(status, (nextStatus, previousStatus) => {
+  if (nextStatus === 'failed' && previousStatus !== 'failed') {
+    isErrorModalOpen.value = true
+  }
+})
 
 watch(jobId, (nextJobId) => {
   if (nextJobId) analysisStore.setJobId(nextJobId)
@@ -131,7 +138,12 @@ async function handleCancel() {
 }
 
 function goToUpload() {
+  isErrorModalOpen.value = false
   router.push('/upload')
+}
+
+function closeErrorModal() {
+  isErrorModalOpen.value = false
 }
 
 function setCurrentStepElement(element, step) {
@@ -233,29 +245,44 @@ onBeforeUnmount(stopPolling)
       </section>
 
       <section
-        v-if="status !== 'completed'"
+        v-if="!isTerminal"
         class="flex flex-col gap-3 rounded-xl border p-5 sm:flex-row sm:items-center sm:justify-between"
         :class="status === 'failed' ? 'border-red-200 bg-red-50' : status === 'cancelled' ? 'border-amber-200 bg-amber-50' : status === 'completed' ? 'border-emerald-200 bg-emerald-50' : 'border-blue-100 bg-blue-50'"
       >
         <div class="flex items-start gap-3">
-          <ExclamationTriangleIcon v-if="status === 'failed'" class="h-6 w-6 shrink-0 text-red-600" aria-hidden="true" />
-          <XCircleIcon v-else-if="status === 'cancelled'" class="h-6 w-6 shrink-0 text-amber-600" aria-hidden="true" />
-          <CheckCircleIcon v-else-if="status === 'completed'" class="h-6 w-6 shrink-0 text-emerald-600" aria-hidden="true" />
-          <ArrowPathIcon v-else class="h-6 w-6 shrink-0 animate-spin text-blue-600" aria-hidden="true" />
+          <ArrowPathIcon class="h-6 w-6 shrink-0 animate-spin text-blue-600" aria-hidden="true" />
           <div>
             <p class="font-extrabold text-slate-900">{{ statusMessage }}</p>
             <p v-if="errorMessage" class="mt-1 text-sm text-red-700">{{ errorMessage }}</p>
           </div>
         </div>
         <div class="flex shrink-0 gap-2">
-          <button v-if="status === 'failed' || status === 'cancelled'" type="button" class="border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50" @click="goToUpload">다시 분석하기</button>
-          <button v-else type="button" class="border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60" :disabled="isCancelling" @click="handleCancel">
+          <button type="button" class="border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60" :disabled="isCancelling" @click="handleCancel">
             {{ isCancelling ? '취소 중...' : '분석 취소' }}
           </button>
         </div>
       </section>
 
       <p class="text-center text-xs text-slate-400">{{ mode === 'mock' ? 'Mock API' : '실제 API' }}로 분석 상태를 확인하고 있습니다.</p>
+    </div>
+
+    <div v-if="isErrorModalOpen && status === 'failed'" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" role="presentation" @click.self="closeErrorModal">
+      <section class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" role="dialog" aria-modal="true" aria-labelledby="analysis-error-title">
+        <div class="flex items-start gap-3">
+          <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
+            <ExclamationTriangleIcon class="h-6 w-6" aria-hidden="true" />
+          </span>
+          <div>
+            <h2 id="analysis-error-title" class="text-lg font-extrabold text-slate-900">분석 중 오류가 발생했습니다.</h2>
+            <p class="mt-2 text-sm leading-6 text-slate-600">분석을 완료하지 못했습니다. 다시 분석해주세요.</p>
+            <p v-if="errorMessage" class="mt-2 text-sm leading-6 text-red-700">{{ errorMessage }}</p>
+          </div>
+        </div>
+        <div class="mt-6 flex justify-end gap-2">
+          <button type="button" class="border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50" @click="closeErrorModal">확인</button>
+          <button type="button" class="bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700" @click="goToUpload">다시 분석하기</button>
+        </div>
+      </section>
     </div>
   </div>
 </template>
