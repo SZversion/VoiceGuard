@@ -88,5 +88,40 @@
     "target": "금융사기",
     "reason": "금융 범죄 용어 띄어쓰기 교정",
     "kind": "spacing"
+  },
+  {
+    "rule_id": "domain-financial-008",
+    "source": "금융 감독원",
+    "target": "금융감독원",
+    "reason": "금융기관명 띄어쓰기 교정",
+    "kind": "spacing"
+  },
+  {
+    "rule_id": "domain-financial-009",
+    "source": "인증 번호",
+    "target": "인증번호",
+    "reason": "인증 수단 용어 띄어쓰기 교정",
+    "kind": "spacing"
+  },
+  {
+    "rule_id": "domain-financial-010",
+    "source": "비밀 번호",
+    "target": "비밀번호",
+    "reason": "인증 수단 용어 띄어쓰기 교정",
+    "kind": "spacing"
+  },
+  {
+    "rule_id": "domain-financial-011",
+    "source": "안전 계좌",
+    "target": "안전계좌",
+    "reason": "보이스피싱 유도 표현 띄어쓰기 교정",
+    "kind": "spacing"
+  },
+  {
+    "rule_id": "domain-financial-012",
+    "source": "공인 인증서",
+    "target": "공인인증서",
+    "reason": "인증 수단 용어 띄어쓰기 교정",
+    "kind": "spacing"
   }
 ]
