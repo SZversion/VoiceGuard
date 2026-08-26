@@ -3,12 +3,14 @@ import os
 import re
 from collections.abc import Callable
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.analysis.analyzer import VoicePhishingAnalyzer
+from app.analysis.domain_corrector import DomainTermCorrector, load_default_domain_rules
 from app.analysis.model_loader import load_text_classifier
 from app.analysis.whisper_lora_loader import load_whisper_lora_transcriber
 from app.api.exception_handlers import request_validation_exception_handler, unhandled_exception_handler
@@ -87,6 +89,14 @@ def _initialize_runtime(
         app.state.analyzer = VoicePhishingAnalyzer(
             app.state.transcriber,
             app.state.classifier,
+            corrector=DomainTermCorrector(
+                load_default_domain_rules(
+                    Path(__file__).resolve().parents[2]
+                    / "data"
+                    / "stt_dictionary"
+                    / "domain_corrections.json"
+                )
+            ),
         )
         app.state.model_status["analyzable"] = True
 

@@ -85,6 +85,16 @@ def test_analysis_pipeline_completes_and_returns_result(tmp_path: Path):
                 "suspicion_score": 0.1,
                 "reference_segments": [],
                 "guidance": "검토가 필요한 경우 금융기관 공식 채널로 확인하세요.",
+                "raw_transcript": "정상적인 상담 내용입니다.",
+                "corrected_transcript": "정상적인 상담 내용입니다.",
+                "corrections": [],
+                "classification_status": "classified",
+                "quality": {
+                    "usable": True,
+                    "score": 1.0,
+                    "reason": None,
+                    "excluded_chunk_count": 0,
+                },
             },
         }
         assert list(tmp_path.iterdir()) == []

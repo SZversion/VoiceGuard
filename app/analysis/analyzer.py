@@ -6,7 +6,9 @@ from typing import Protocol
 
 from app.analysis.audio_chunking import TranscriptChunk
 from app.analysis.classifier import ClassifierOutput, TextClassifier
+from app.analysis.domain_corrector import DomainTermCorrector
 from app.analysis.text_normalizer import normalize_finance_text
+from app.analysis.transcript_quality import TranscriptQualityFilter
 
 
 class Transcriber(Protocol):
@@ -28,10 +30,14 @@ class VoicePhishingAnalyzer:
         transcriber: Transcriber | Callable[[bytes], Awaitable[str]],
         classifier: TextClassifier,
         guidance: str = "\uac80\ud1a0\uac00 \ud544\uc694\ud55c \uacbd\uc6b0 \uae08\uc735\uae30\uad00 \uacf5\uc2dd \ucc44\ub110\ub85c \ud655\uc778\ud558\uc138\uc694.",
+        corrector: DomainTermCorrector | None = None,
+        quality_filter: TranscriptQualityFilter | None = None,
     ):
         self.transcriber = transcriber
         self.classifier = classifier
         self.guidance = guidance
+        self.corrector = corrector or DomainTermCorrector([])
+        self.quality_filter = quality_filter or TranscriptQualityFilter()
 
     async def analyze(self, audio: bytes) -> Mapping[str, object]:
         return await self.analyze_with_progress(audio, lambda stage: None)
@@ -70,7 +76,8 @@ class VoicePhishingAnalyzer:
         report_stage("transcribing")
         queue: asyncio.Queue = asyncio.Queue(maxsize=1)
         sentinel = object()
-        scored_chunks: list[tuple[TranscriptChunk, ClassifierOutput]] = []
+        scored_chunks: list[tuple[TranscriptChunk, str, ClassifierOutput]] = []
+        prepared_chunks: list[tuple[TranscriptChunk, str, object, object]] = []
 
         async def produce() -> None:
             async for item in transcribe_stream(audio):
@@ -109,11 +116,25 @@ class VoicePhishingAnalyzer:
                         "classified_chunks": classified,
                         "total_chunks": total,
                     })
+                correction = self.corrector.correct(normalized_transcript)
+                quality = self.quality_filter.check(correction.corrected_transcript)
+                prepared_chunks.append(
+                    (transcript_chunk, correction.corrected_transcript, correction, quality)
+                )
+                if not quality.usable:
+                    logger.info(
+                        "[classifying] chunk %s/%s skipped quality=%s",
+                        index,
+                        total,
+                        quality.reason,
+                    )
+                    continue
+
                 logger.info("[classifying] chunk %s/%s started", index, total)
                 started_at = time.perf_counter()
                 result = await asyncio.to_thread(
                     self._classify_transcript,
-                    normalized_transcript,
+                    correction.corrected_transcript,
                 )
                 logger.info(
                     "[classifying] chunk %s/%s completed latency_ms=%d",
@@ -122,7 +143,7 @@ class VoicePhishingAnalyzer:
                     round((time.perf_counter() - started_at) * 1000),
                 )
                 classified += 1
-                scored_chunks.append((transcript_chunk, result))
+                scored_chunks.append((transcript_chunk, correction.corrected_transcript, result))
                 if report_progress is not None:
                     report_progress({
                         "stage": "classifying",
@@ -145,18 +166,20 @@ class VoicePhishingAnalyzer:
                 consumer_task,
                 return_exceptions=True,
             )
-        if not scored_chunks:
+        if not prepared_chunks:
             raise ValueError("audio chunk transcription returned no results")
+        if not scored_chunks:
+            return self._skipped_result(prepared_chunks)
 
         report_stage("risk_search")
         ranked_chunks = sorted(
             scored_chunks,
-            key=lambda item: item[1].suspicion_score,
+            key=lambda item: item[2].suspicion_score,
             reverse=True,
         )
         top_five = ranked_chunks[:5]
         aggregated_score = sum(
-            result.suspicion_score for _, result in top_five
+            result.suspicion_score for _, _, result in top_five
         ) / len(top_five)
         label = "voice_phishing" if aggregated_score >= 0.5 else "normal"
 
@@ -168,12 +191,13 @@ class VoicePhishingAnalyzer:
                 {
                     "start": chunk.start,
                     "end": chunk.end,
-                    "transcript": normalize_finance_text(chunk.transcript),
+                    "transcript": corrected_transcript,
                     "suspicion_score": result.suspicion_score,
                 }
-                for chunk, result in ranked_chunks[:3]
+                for chunk, corrected_transcript, result in ranked_chunks[:3]
             ],
             "guidance": self.guidance,
+            **self._transcript_metadata(prepared_chunks),
         }
     async def _analyze_audio_chunks(
         self,
@@ -183,7 +207,8 @@ class VoicePhishingAnalyzer:
     ) -> Mapping[str, object]:
         report_stage("transcribing")
         transcript_chunks: list[TranscriptChunk] = await transcribe_chunks(audio)
-        scored_chunks: list[tuple[TranscriptChunk, ClassifierOutput]] = []
+        scored_chunks: list[tuple[TranscriptChunk, str, ClassifierOutput]] = []
+        prepared_chunks: list[tuple[TranscriptChunk, str, object, object]] = []
 
         for transcript_chunk in transcript_chunks:
             report_stage("normalizing")
@@ -191,22 +216,31 @@ class VoicePhishingAnalyzer:
                 transcript_chunk.transcript
             )
 
+            correction = self.corrector.correct(normalized_transcript)
+            quality = self.quality_filter.check(correction.corrected_transcript)
+            prepared_chunks.append(
+                (transcript_chunk, correction.corrected_transcript, correction, quality)
+            )
+            if not quality.usable:
+                continue
             report_stage("classifying")
-            result = self._classify_transcript(normalized_transcript)
-            scored_chunks.append((transcript_chunk, result))
+            result = self._classify_transcript(correction.corrected_transcript)
+            scored_chunks.append((transcript_chunk, correction.corrected_transcript, result))
 
-        if not scored_chunks:
+        if not prepared_chunks:
             raise ValueError("audio chunk transcription returned no results")
+        if not scored_chunks:
+            return self._skipped_result(prepared_chunks)
 
         report_stage("risk_search")
         ranked_chunks = sorted(
             scored_chunks,
-            key=lambda item: item[1].suspicion_score,
+            key=lambda item: item[2].suspicion_score,
             reverse=True,
         )
         top_five = ranked_chunks[:5]
         aggregated_score = sum(
-            result.suspicion_score for _, result in top_five
+            result.suspicion_score for _, _, result in top_five
         ) / len(top_five)
         label = "voice_phishing" if aggregated_score >= 0.5 else "normal"
 
@@ -218,12 +252,13 @@ class VoicePhishingAnalyzer:
                 {
                     "start": chunk.start,
                     "end": chunk.end,
-                    "transcript": normalize_finance_text(chunk.transcript),
+                    "transcript": corrected_transcript,
                     "suspicion_score": result.suspicion_score,
                 }
-                for chunk, result in ranked_chunks[:3]
+                for chunk, corrected_transcript, result in ranked_chunks[:3]
             ],
             "guidance": self.guidance,
+            **self._transcript_metadata(prepared_chunks),
         }
 
     def _classify_single_transcript(
@@ -233,9 +268,29 @@ class VoicePhishingAnalyzer:
     ) -> Mapping[str, object]:
         report_stage("normalizing")
         normalized_transcript = normalize_finance_text(transcript)
+        correction = self.corrector.correct(normalized_transcript)
+        quality = self.quality_filter.check(correction.corrected_transcript)
+
+        if not quality.usable:
+            report_stage("risk_search")
+            report_stage("finalizing")
+            return {
+                "raw_transcript": normalized_transcript,
+                "corrected_transcript": correction.corrected_transcript,
+                "corrections": self._serialize_corrections(correction),
+                "classification_status": "skipped",
+                "quality": {
+                    "usable": quality.usable,
+                    "score": quality.score,
+                    "reason": quality.reason,
+                    "excluded_chunk_count": 1,
+                },
+                "reference_segments": [],
+                "guidance": self.guidance,
+            }
 
         report_stage("classifying")
-        result = self._classify_transcript(normalized_transcript)
+        result = self._classify_transcript(correction.corrected_transcript)
 
         report_stage("risk_search")
         reference_segments = []
@@ -245,6 +300,69 @@ class VoicePhishingAnalyzer:
             "label": result.label,
             "suspicion_score": result.suspicion_score,
             "reference_segments": reference_segments,
+            "guidance": self.guidance,
+            "raw_transcript": normalized_transcript,
+            "corrected_transcript": correction.corrected_transcript,
+            "corrections": self._serialize_corrections(correction),
+            "classification_status": "classified",
+            "quality": {
+                "usable": quality.usable,
+                "score": quality.score,
+                "reason": quality.reason,
+                "excluded_chunk_count": 0,
+            },
+        }
+
+    @staticmethod
+    def _serialize_corrections(correction) -> list[dict[str, str]]:
+        return [
+            {
+                "rule_id": item.rule_id,
+                "source": item.source,
+                "target": item.target,
+                "reason": item.reason,
+                "kind": item.kind,
+            }
+            for item in correction.corrections
+        ]
+
+    def _transcript_metadata(self, prepared_chunks) -> dict[str, object]:
+        raw_transcript = " ".join(chunk.transcript for chunk, _, _, _ in prepared_chunks)
+        corrected_transcript = " ".join(
+            corrected for _, corrected, _, _ in prepared_chunks
+        )
+        quality_results = [quality for _, _, _, quality in prepared_chunks]
+        excluded_count = sum(not quality.usable for quality in quality_results)
+        score = round(
+            sum(quality.score for quality in quality_results) / len(quality_results),
+            4,
+        ) if quality_results else 0.0
+        corrections = [
+            correction
+            for _, _, item, _ in prepared_chunks
+            for correction in self._serialize_corrections(item)
+        ]
+        return {
+            "raw_transcript": raw_transcript,
+            "corrected_transcript": corrected_transcript,
+            "corrections": corrections,
+            "classification_status": "classified",
+            "quality": {
+                "usable": excluded_count == 0,
+                "score": score,
+                "reason": None if excluded_count == 0 else "some_chunks_unusable",
+                "excluded_chunk_count": excluded_count,
+            },
+        }
+
+    def _skipped_result(self, prepared_chunks) -> Mapping[str, object]:
+        metadata = self._transcript_metadata(prepared_chunks)
+        metadata["classification_status"] = "skipped"
+        quality = metadata["quality"]
+        quality["reason"] = "all_chunks_unusable"
+        return {
+            **metadata,
+            "reference_segments": [],
             "guidance": self.guidance,
         }
 

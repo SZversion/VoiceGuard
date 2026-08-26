@@ -1,0 +1,92 @@
+[
+  {
+    "rule_id": "domain-investigation-001",
+    "source": "검찰 청",
+    "target": "검찰청",
+    "reason": "수사기관명 표기 교정",
+    "kind": "spacing"
+  },
+  {
+    "rule_id": "domain-financial-001",
+    "source": "대출 상환",
+    "target": "대출상환",
+    "reason": "금융 용어 표기 교정",
+    "kind": "spacing"
+  },
+  {
+    "rule_id": "domain-phishing-001",
+    "source": "보이스 피싱",
+    "target": "보이스피싱",
+    "reason": "보이스피싱 용어 표기 교정",
+    "kind": "spacing"
+  },
+  {
+    "rule_id": "domain-phishing-002",
+    "source": "보이스피시",
+    "target": "보이스피싱",
+    "reason": "보이스피싱 용어 오탈자 교정",
+    "kind": "typo"
+  },
+  {
+    "rule_id": "domain-financial-006",
+    "source": "계절",
+    "target": "계좌",
+    "reason": "금융 문맥 STT 오탈자 교정",
+    "kind": "typo",
+    "context_terms": ["금융", "입금", "이체", "송금", "은행", "통장", "대출", "잔액"],
+    "context_window": 20
+  },
+  {
+    "rule_id": "domain-financial-007",
+    "source": "모통장",
+    "target": "무통장",
+    "reason": "금융 문맥 STT 오탈자 교정",
+    "kind": "typo",
+    "context_terms": ["입금", "이체", "송금", "은행", "계좌", "통장", "대출"],
+    "context_window": 20
+  },
+  {
+    "rule_id": "domain-investigation-003",
+    "source": "검찰촌",
+    "target": "검찰청",
+    "reason": "수사기관명 문맥 STT 오탈자 교정",
+    "kind": "typo",
+    "context_terms": ["수사", "기관", "사칭", "검사", "경찰", "공무원"],
+    "context_window": 20
+  },
+  {
+    "rule_id": "domain-financial-002",
+    "source": "대포 통장",
+    "target": "대포통장",
+    "reason": "금융 범죄 용어 띄어쓰기 교정",
+    "kind": "spacing"
+  },
+  {
+    "rule_id": "domain-financial-003",
+    "source": "개인 정보",
+    "target": "개인정보",
+    "reason": "개인정보 용어 띄어쓰기 교정",
+    "kind": "spacing"
+  },
+  {
+    "rule_id": "domain-financial-004",
+    "source": "신용 카드",
+    "target": "신용카드",
+    "reason": "금융 용어 띄어쓰기 교정",
+    "kind": "spacing"
+  },
+  {
+    "rule_id": "domain-investigation-002",
+    "source": "명의 도용",
+    "target": "명의도용",
+    "reason": "수사 용어 띄어쓰기 교정",
+    "kind": "spacing"
+  },
+  {
+    "rule_id": "domain-financial-005",
+    "source": "금융 사기",
+    "target": "금융사기",
+    "reason": "금융 범죄 용어 띄어쓰기 교정",
+    "kind": "spacing"
+  }
+]
