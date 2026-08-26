@@ -1,0 +1,98 @@
+  <svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1280" viewBox="0 0 1800 1280" role="img" aria-labelledby="title desc">
+  <title id="title">보이스피싱 통화 분석 서비스 고객여정지도</title>
+  <desc id="desc">PC 사용자가 통화 녹음파일을 업로드하고 분석 결과를 확인한 뒤 대응하는 여정과 단계별 pain point를 정리한 지도</desc>
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="5" stdDeviation="8" flood-color="#1e3a8a" flood-opacity=".10"/></filter>
+    <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8db5"/></marker>
+    <style>
+      .title { font: 800 38px "Noto Sans KR", "Malgun Gothic", sans-serif; fill: #172554; }
+      .subtitle { font: 400 18px "Noto Sans KR", "Malgun Gothic", sans-serif; fill: #64748b; }
+      .stage { font: 800 22px "Noto Sans KR", "Malgun Gothic", sans-serif; fill: #ffffff; }
+      .label { font: 700 19px "Noto Sans KR", "Malgun Gothic", sans-serif; fill: #334155; }
+      .body { font: 500 17px "Noto Sans KR", "Malgun Gothic", sans-serif; fill: #1e293b; }
+      .solution { font: 700 18px "Noto Sans KR", "Malgun Gothic", sans-serif; fill: #166534; }
+      .small { font: 400 15px "Noto Sans KR", "Malgun Gothic", sans-serif; fill: #64748b; }
+    </style>
+  </defs>
+  <rect width="1800" height="1280" fill="#f8fafc"/>
+  <rect x="42" y="36" width="1716" height="1208" rx="28" fill="#ffffff" stroke="#dbe5f2" stroke-width="2"/>
+  <text x="86" y="104" class="title">보이스피싱 통화 분석 서비스 고객여정지도</text>
+  <text x="86" y="140" class="subtitle">통화 후 불안을 느끼는 사용자가 녹음파일을 분석하고, 확인할 구간과 대응 방법을 얻는 흐름</text>
+
+  <rect x="86" y="184" width="1628" height="88" rx="18" fill="#eff6ff" stroke="#bfdbfe"/>
+  <text x="116" y="220" class="label">핵심 사용자</text>
+  <text x="116" y="250" class="body">보이스피싱 통화를 정상적인 금융·수사 절차로 오인하기 쉽고, 통화 후 녹음파일을 확인하고 싶은 PC·모바일 웹/PWA 사용자</text>
+
+  <text x="86" y="350" class="label">1. 여정 단계</text>
+  <line x1="210" y1="346" x2="1650" y2="346" stroke="#cbd5e1" stroke-width="3"/>
+  <g filter="url(#shadow)">
+    <rect x="86" y="380" width="246" height="72" rx="16" fill="#2563eb"/>
+    <rect x="360" y="380" width="246" height="72" rx="16" fill="#2563eb"/>
+    <rect x="634" y="380" width="246" height="72" rx="16" fill="#2563eb"/>
+    <rect x="908" y="380" width="246" height="72" rx="16" fill="#2563eb"/>
+    <rect x="1182" y="380" width="246" height="72" rx="16" fill="#2563eb"/>
+    <rect x="1456" y="380" width="258" height="72" rx="16" fill="#2563eb"/>
+  </g>
+  <g fill="#fff" text-anchor="middle" class="stage">
+    <text x="209" y="425">1. 접속·동의</text><text x="483" y="425">2. 모델 준비</text><text x="757" y="425">3. 파일 업로드</text>
+    <text x="1031" y="425">4. 분석 진행</text><text x="1305" y="425">5. 결과 확인</text><text x="1585" y="425">6. 대응·종료</text>
+  </g>
+
+  <text x="86" y="528" class="label">2. 사용자 행동</text>
+  <g filter="url(#shadow)">
+    <rect x="86" y="550" width="246" height="104" rx="16" fill="#fdf2f8" stroke="#f9a8d4"/>
+    <rect x="360" y="550" width="246" height="104" rx="16" fill="#fdf2f8" stroke="#f9a8d4"/>
+    <rect x="634" y="550" width="246" height="104" rx="16" fill="#fdf2f8" stroke="#f9a8d4"/>
+    <rect x="908" y="550" width="246" height="104" rx="16" fill="#fdf2f8" stroke="#f9a8d4"/>
+    <rect x="1182" y="550" width="246" height="104" rx="16" fill="#fdf2f8" stroke="#f9a8d4"/>
+    <rect x="1456" y="550" width="258" height="104" rx="16" fill="#fdf2f8" stroke="#f9a8d4"/>
+  </g>
+  <g class="body">
+    <text x="108" y="585">서비스 접속</text><text x="108" y="612">개인정보 안내 동의</text>
+    <text x="382" y="585">준비 상태 확인</text><text x="382" y="612">업로드 화면 진입</text>
+    <text x="656" y="585">WAV·MP3·M4A 선택</text><text x="656" y="612">분석 시작</text>
+    <text x="930" y="585">단계별 진행 상태 확인</text><text x="930" y="612">필요 시 분석 취소</text>
+    <text x="1204" y="585">정상·의심 결과 확인</text><text x="1204" y="612">의심도와 위험 구간 확인</text>
+    <text x="1478" y="585">공식 기관에 재확인</text><text x="1478" y="612">원본·임시 데이터 삭제</text>
+  </g>
+
+  <text x="86" y="730" class="label">3. Pain point</text>
+  <g filter="url(#shadow)">
+    <rect x="86" y="760" width="246" height="104" rx="16" fill="#fff7ed" stroke="#fed7aa"/>
+    <rect x="360" y="760" width="246" height="104" rx="16" fill="#fff7ed" stroke="#fed7aa"/>
+    <rect x="634" y="760" width="246" height="104" rx="16" fill="#fff7ed" stroke="#fed7aa"/>
+    <rect x="908" y="760" width="246" height="104" rx="16" fill="#fff7ed" stroke="#fed7aa"/>
+    <rect x="1182" y="760" width="246" height="104" rx="16" fill="#fff7ed" stroke="#fed7aa"/>
+    <rect x="1456" y="760" width="258" height="104" rx="16" fill="#fff7ed" stroke="#fed7aa"/>
+  </g>
+  <g class="body">
+    <text x="108" y="800"><tspan x="108" dy="0">내 정보가 저장되거나</tspan><tspan x="108" dy="28">유출되지 않을까?</tspan></text>
+    <text x="382" y="800"><tspan x="382" dy="0">분석을 바로 시작해도</tspan><tspan x="382" dy="28">되는지 모르겠다.</tspan></text>
+    <text x="656" y="800"><tspan x="656" dy="0">파일 형식·손상 여부를</tspan><tspan x="656" dy="28">판단하기 어렵다.</tspan></text>
+    <text x="930" y="800"><tspan x="930" dy="0">얼마나 기다려야 하는지,</tspan><tspan x="930" dy="28">현재 무엇을 하는지 모른다.</tspan></text>
+    <text x="1204" y="800"><tspan x="1204" dy="0">결과를 믿어도 되는지,</tspan><tspan x="1204" dy="28">어떤 문장이 근거인지 모른다.</tspan></text>
+    <text x="1478" y="800"><tspan x="1478" dy="0">지금 무엇을 해야</tspan><tspan x="1478" dy="28">안전한지 막막하다.</tspan></text>
+  </g>
+
+  <text x="86" y="940" class="label">4. 서비스가 제공하는 해결</text>
+  <g filter="url(#shadow)">
+    <rect x="86" y="970" width="246" height="104" rx="16" fill="#ecfdf5" stroke="#a7f3d0"/>
+    <rect x="360" y="970" width="246" height="104" rx="16" fill="#ecfdf5" stroke="#a7f3d0"/>
+    <rect x="634" y="970" width="246" height="104" rx="16" fill="#ecfdf5" stroke="#a7f3d0"/>
+    <rect x="908" y="970" width="246" height="104" rx="16" fill="#ecfdf5" stroke="#a7f3d0"/>
+    <rect x="1182" y="970" width="246" height="104" rx="16" fill="#ecfdf5" stroke="#a7f3d0"/>
+    <rect x="1456" y="970" width="258" height="104" rx="16" fill="#ecfdf5" stroke="#a7f3d0"/>
+  </g>
+  <g class="solution">
+    <text x="108" y="1005"><tspan x="108" dy="0">동의 안내와</tspan><tspan x="108" dy="27">비저장 정책 명시</tspan></text>
+    <text x="382" y="1005"><tspan x="382" dy="0">STT·분류 모델</tspan><tspan x="382" dy="27">준비 상태 안내</tspan></text>
+    <text x="656" y="1005"><tspan x="656" dy="0">확장자·실제 형식·</tspan><tspan x="656" dy="27">음성 스트림 검증</tspan></text>
+    <text x="930" y="1005"><tspan x="930" dy="0">비동기 작업과</tspan><tspan x="930" dy="27">단계별 진행률 표시</tspan></text>
+    <text x="1204" y="1005"><tspan x="1204" dy="0">통화 단위 점수와</tspan><tspan x="1204" dy="27">상위 위험 구간 최대 3개 제공</tspan></text>
+    <text x="1478" y="1005"><tspan x="1478" dy="0">검토된 대응 문구와</tspan><tspan x="1478" dy="27">공식 채널 확인 안내</tspan></text>
+  </g>
+  <g stroke="#7c8db5" stroke-width="2" fill="none" marker-end="url(#arrow)">
+    <path d="M332 416 H360"/><path d="M606 416 H634"/><path d="M880 416 H908"/><path d="M1154 416 H1182"/><path d="M1428 416 H1456"/>
+  </g>
+  <text x="86" y="1202" class="small">근거 문서: docs/PRD_SDD.md · docs/specs/frontend.md · MVP는 PC 웹 서비스와 메모리 기반 임시 처리에 집중</text>
+</svg>

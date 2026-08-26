@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1120" viewBox="0 0 1800 1120" role="img" aria-labelledby="title desc">
+  <title id="title">보이스피싱 통화 분석 전체 파이프라인 구조도</title>
+  <desc id="desc">Nuxt 프론트엔드와 FastAPI 백엔드, 음성 분석 모듈, 결과 화면과 임시 데이터 정리 흐름을 보여주는 구조도</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="5" stdDeviation="8" flood-color="#1e3a8a" flood-opacity=".10"/></filter>
+    <style>
+      .title { font: 800 38px "Noto Sans KR", "Malgun Gothic", sans-serif; fill: #172554; }
+      .subtitle { font: 400 18px "Noto Sans KR", "Malgun Gothic", sans-serif; fill: #64748b; }
+      .head { font: 800 22px "Noto Sans KR", "Malgun Gothic", sans-serif; fill: #fff; }
+      .on-dark { font: 500 17px "Noto Sans KR", "Malgun Gothic", sans-serif; fill: #ffcc00; }
+      .on-dark-small { font: 400 15px "Noto Sans KR", "Malgun Gothic", sans-serif; fill: #ffcc00; }
+      .boxhead { font: 800 20px "Noto Sans KR", "Malgun Gothic", sans-serif; fill: #1e3a8a; }
+      .body { font: 500 17px "Noto Sans KR", "Malgun Gothic", sans-serif; fill: #1e293b; }
+      .small { font: 400 15px "Noto Sans KR", "Malgun Gothic", sans-serif; fill: #64748b; }
+      .api { font: 700 15px "Cascadia Code", Consolas, monospace; fill: #475569; }
+    </style>
+  </defs>
+  <rect width="1800" height="1120" fill="#f8fafc"/>
+  <rect x="42" y="36" width="1716" height="1048" rx="28" fill="#fff" stroke="#dbe5f2" stroke-width="2"/>
+  <text x="86" y="104" class="title">보이스피싱 통화 분석 전체 파이프라인 구조도</text>
+  <text x="86" y="140" class="subtitle">화면·API·분석 모듈의 책임을 분리하고, 원본 음성과 임시 데이터는 분석 후 정리하는 MVP 구조</text>
+
+  <rect x="86" y="184" width="1628" height="154" rx="20" fill="#eff6ff" stroke="#bfdbfe"/>
+  <rect x="112" y="210" width="302" height="100" rx="14" fill="#2563eb" filter="url(#shadow)"/>
+  <text x="263" y="250" text-anchor="middle" class="head">사용자 PC 브라우저</text>
+  <text x="263" y="280" text-anchor="middle" class="on-dark">음성파일 선택 · 결과 확인</text>
+  <line x1="414" y1="260" x2="492" y2="260" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="492" y="210" width="420" height="100" rx="14" fill="#fff" stroke="#93c5fd" stroke-width="2"/>
+  <text x="702" y="248" text-anchor="middle" class="boxhead">Netlify · Nuxt.js 프론트엔드</text>
+  <text x="702" y="278" text-anchor="middle" class="body">upload · analyze · result</text>
+  <line x1="912" y1="260" x2="990" y2="260" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="990" y="210" width="440" height="100" rx="14" fill="#fff" stroke="#93c5fd" stroke-width="2"/>
+  <text x="1210" y="244" text-anchor="middle" class="boxhead">HTTPS API 호출</text>
+  <text x="1210" y="270" text-anchor="middle" class="api">POST /api/analyze</text>
+  <text x="1210" y="294" text-anchor="middle" class="api">GET /api/analyze/{job_id}/status</text>
+  <line x1="1430" y1="260" x2="1508" y2="260" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="1508" y="210" width="180" height="100" rx="14" fill="#1e3a8a" filter="url(#shadow)"/>
+  <text x="1598" y="250" text-anchor="middle" class="head">Railway</text>
+  <text x="1598" y="280" text-anchor="middle" class="on-dark">FastAPI</text>
+
+  <text x="86" y="400" class="boxhead">FastAPI 작업·보호 계층</text>
+  <rect x="86" y="426" width="1628" height="126" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+  <g filter="url(#shadow)">
+    <rect x="116" y="450" width="300" height="76" rx="12" fill="#fff" stroke="#cbd5e1"/>
+    <rect x="450" y="450" width="300" height="76" rx="12" fill="#fff" stroke="#cbd5e1"/>
+    <rect x="784" y="450" width="300" height="76" rx="12" fill="#fff" stroke="#cbd5e1"/>
+    <rect x="1118" y="450" width="270" height="76" rx="12" fill="#fff" stroke="#cbd5e1"/>
+    <rect x="1422" y="450" width="260" height="76" rx="12" fill="#fff" stroke="#cbd5e1"/>
+  </g>
+  <g text-anchor="middle">
+    <text x="266" y="480" class="boxhead">JobRegistry</text><text x="266" y="506" class="small">작업 상태·결과 임시 관리</text>
+    <text x="600" y="480" class="boxhead">TaskRegistry</text><text x="600" y="506" class="small">비동기 작업 추적·취소</text>
+    <text x="934" y="480" class="boxhead">TempDataStore</text><text x="934" y="506" class="small">원본·임시 파일 관리</text>
+    <text x="1253" y="480" class="boxhead">중복 작업 잠금</text><text x="1253" y="506" class="small">사용자별 동시 분석 제한</text>
+    <text x="1552" y="480" class="boxhead">IP Rate Limit</text><text x="1552" y="506" class="small">요청 빈도 제한</text>
+  </g>
+
+  <line x1="900" y1="552" x2="900" y2="604" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="86" y="604" width="1628" height="260" rx="20" fill="#eef2ff" stroke="#c7d2fe"/>
+  <text x="116" y="644" class="boxhead">VoicePhishingAnalyzer · 공통 분석 모듈</text>
+  <g filter="url(#shadow)">
+    <rect x="116" y="684" width="204" height="116" rx="14" fill="#fff" stroke="#a5b4fc"/>
+    <rect x="350" y="684" width="204" height="116" rx="14" fill="#fff" stroke="#a5b4fc"/>
+    <rect x="584" y="684" width="204" height="116" rx="14" fill="#fff" stroke="#a5b4fc"/>
+    <rect x="818" y="684" width="204" height="116" rx="14" fill="#fff" stroke="#a5b4fc"/>
+    <rect x="1052" y="684" width="204" height="116" rx="14" fill="#fff" stroke="#a5b4fc"/>
+    <rect x="1286" y="684" width="204" height="116" rx="14" fill="#fff" stroke="#a5b4fc"/>
+    <rect x="1520" y="684" width="162" height="116" rx="14" fill="#1e3a8a"/>
+  </g>
+  <g text-anchor="middle">
+    <text x="218" y="721" class="boxhead">1. 오디오</text><text x="218" y="750" class="body">전처리</text><text x="218" y="778" class="small">mono · 16kHz · PCM</text>
+    <text x="452" y="721" class="boxhead">2. STT</text><text x="452" y="750" class="body">음성 전사</text><text x="452" y="778" class="small">한국어 검증</text>
+    <text x="686" y="721" class="boxhead">3. 텍스트</text><text x="686" y="750" class="body">정규화·청킹</text><text x="686" y="778" class="small">분석 단위 생성</text>
+    <text x="920" y="721" class="boxhead">4. 분류</text><text x="920" y="750" class="body">청크 점수</text><text x="920" y="778" class="small">KoELECTRA</text>
+    <text x="1154" y="721" class="boxhead">5. 집계</text><text x="1154" y="750" class="body">통화 단위 점수</text><text x="1154" y="778" class="small">threshold 적용</text>
+    <text x="1388" y="721" class="boxhead">6. 구간</text><text x="1388" y="750" class="body">위험 근거 선택</text><text x="1388" y="778" class="small">상위 최대 3개</text>
+    <text x="1601" y="721" class="head">7. 결과</text><text x="1601" y="750" class="on-dark">응답 포맷</text><text x="1601" y="778" class="on-dark-small">label · score · guidance</text>
+  </g>
+  <g stroke="#64748b" stroke-width="1.5" fill="none" marker-end="url(#arrow)">
+    <path d="M320 742 H350"/><path d="M554 742 H584"/><path d="M788 742 H818"/><path d="M1022 742 H1052"/><path d="M1256 742 H1286"/><path d="M1490 742 H1520"/>
+  </g>
+
+  <line x1="900" y1="864" x2="900" y2="914" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="86" y="914" width="1628" height="110" rx="18" fill="#ecfdf5" stroke="#a7f3d0"/>
+  <rect x="116" y="936" width="420" height="66" rx="12" fill="#fff" stroke="#86efac"/>
+  <rect x="570" y="936" width="420" height="66" rx="12" fill="#fff" stroke="#86efac"/>
+  <rect x="1024" y="936" width="660" height="66" rx="12" fill="#fff" stroke="#86efac"/>
+  <text x="326" y="975" text-anchor="middle" class="boxhead">GET /api/analyze/{job_id}/result</text>
+  <text x="780" y="975" text-anchor="middle" class="boxhead">Nuxt 결과 화면</text>
+  <text x="1354" y="968" text-anchor="middle" class="boxhead">완료·실패·취소 후 정리</text>
+  <text x="1354" y="992" text-anchor="middle" class="small">원본 음성 · 전사 · 중간 산출물 삭제</text>
+  <text x="86" y="1060" class="small">근거 코드: app/api/main.py · app/analysis/analyzer.py · app/jobs/registry.py · app/jobs/cleanup.py · frontend/composables/useAnalysisApi.js</text>
+</svg>
