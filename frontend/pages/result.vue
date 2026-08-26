@@ -99,6 +99,7 @@ onMounted(loadResult)
       분석 결과를 불러오는 중입니다.
     </div>
 
+    <!-- 에러 메시지 -->
     <div v-else-if="errorMessage" class="max-w-3xl p-6 mx-auto text-red-800 border border-red-200 rounded-xl bg-red-50">
       <div class="flex items-start gap-3">
         <ExclamationTriangleIcon class="w-6 h-6 shrink-0" aria-hidden="true" />
@@ -111,11 +112,14 @@ onMounted(loadResult)
     </div>
 
     <div v-else class="max-w-5xl mx-auto space-y-6">
+
+      <!-- 분석 결과 -->
       <section class="sm:hidden">
         <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">분석 결과</h1>
         <p class="mt-2 text-sm leading-6 text-slate-500">업로드한 통화 내용을 분석한 결과를 안내합니다.</p>
       </section>
 
+      <!-- 분석 결과 -->
       <section
         class="flex flex-col gap-5 p-6 border shadow-sm rounded-xl sm:flex-row sm:items-center sm:justify-between sm:p-8"
         :class="isSuspicious ? 'border-red-200 bg-red-50' : 'border-emerald-200 bg-emerald-50'"
@@ -140,6 +144,24 @@ onMounted(loadResult)
         </div>
       </section>
 
+      <!-- 즉시 행동 안내 -->
+      <section v-if="score >= 50" class="mt-10 overflow-hidden bg-white border shadow-sm rounded-xl border-slate-200">
+        <div class="px-6 pt-10 pb-4 sm:px-8">
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 class="text-[26px] font-extrabold text-slate-900">즉시 행동 안내</h2>
+            <span class="px-3 py-1 text-xs font-bold text-blue-700 rounded-full bg-blue-50">위험도 50 이상</span>
+          </div>
+          <p class="mt-1 text-red-500 text-md">위험도가 50 이상인 경우 아래 순서대로 대응하세요.</p>
+        </div>
+        <ol class="border-t divide-y mb-9 divide-slate-100 border-slate-100">
+          <li v-for="(item, index) in immediateActions" :key="item" class="flex items-center gap-4 px-6 py-3.5 sm:px-8">
+            <span class="flex items-center justify-center w-6 h-6 text-lg font-bold text-white bg-blue-600 rounded-full shrink-0">{{ index + 1 }}</span>
+            <span class="text-lg font-semibold leading-6 text-slate-700">{{ item }}</span>
+          </li>
+        </ol>
+      </section>
+
+      <!-- 위험 구간 -->
       <section class="bg-white border shadow-sm rounded-xl border-slate-200">
         <div class="px-6 py-4 border-b border-slate-200">
           <h2 class="text-xl font-extrabold text-slate-900">위험 구간</h2>
@@ -158,24 +180,9 @@ onMounted(loadResult)
           <CheckCircleIcon class="w-6 h-6 text-emerald-600" aria-hidden="true" />
           위험 구간이 발견되지 않았습니다.
         </div>
-      </section>
+      </section>      
 
-      <section v-if="score >= 50" class="mt-10 overflow-hidden bg-white border shadow-sm rounded-xl border-slate-200">
-        <div class="px-6 pt-10 pb-4 sm:px-8">
-          <div class="flex flex-wrap items-center gap-2">
-            <h2 class="text-[26px] font-extrabold text-slate-900">즉시 행동 안내</h2>
-            <span class="px-3 py-1 text-xs font-bold text-blue-700 rounded-full bg-blue-50">위험도 50 이상</span>
-          </div>
-          <p class="mt-1 text-red-500 text-md">위험도가 50 이상인 경우 아래 순서대로 대응하세요.</p>
-        </div>
-        <ol class="border-t divide-y mb-9 divide-slate-100 border-slate-100">
-          <li v-for="(item, index) in immediateActions" :key="item" class="flex items-center gap-4 px-6 py-3.5 sm:px-8">
-            <span class="flex items-center justify-center w-6 h-6 text-lg font-bold text-white bg-blue-600 rounded-full shrink-0">{{ index + 1 }}</span>
-            <span class="text-lg font-semibold leading-6 text-slate-700">{{ item }}</span>
-          </li>
-        </ol>
-      </section>
-
+      <!-- 안전하게 대응하세요 -->
       <section class="p-6 border border-blue-200 rounded-xl bg-blue-50 sm:p-8">
         <div class="grid items-center gap-5 sm:grid-cols-[7rem_1fr]">
           <span class="flex items-center justify-center w-20 h-20 mx-auto text-white bg-indigo-500 rounded-full">
