@@ -49,3 +49,31 @@ def test_analyzer_aggregates_top_five_and_returns_top_three_segments():
             "suspicion_score": 0.1,
         },
     ]
+
+
+class MixedQualityTranscriber:
+    async def transcribe_chunks(self, audio: bytes):
+        return [
+            TranscriptChunk(0.0, 30.0, "아아 아아 아아 아아 아아"),
+            TranscriptChunk(30.0, 60.0, "계좌 확인 요청"),
+        ]
+
+
+class MixedQualityClassifier:
+    received: list[str] = []
+
+    def classify(self, transcript: str) -> ClassifierOutput:
+        self.received.append(transcript)
+        assert transcript == "계좌 확인 요청"
+        return ClassifierOutput("voice_phishing", 1, 0.8)
+
+
+def test_analyzer_excludes_unusable_chunks_before_classification():
+    classifier = MixedQualityClassifier()
+    analyzer = VoicePhishingAnalyzer(MixedQualityTranscriber(), classifier)
+
+    result = asyncio.run(analyzer.analyze(b"audio"))
+
+    assert classifier.received == ["계좌 확인 요청"]
+    assert result["classification_status"] == "classified"
+    assert result["quality"]["excluded_chunk_count"] == 1
