@@ -17,7 +17,7 @@ def test_runner_completes_job_with_injected_test_analyzer():
     assert completed.result["label"] == "normal"
 
 
-def test_runner_marks_job_failed_when_analyzer_raises():
+def test_runner_marks_job_failed_when_analyzer_raises(caplog):
     class FailingAnalyzer:
         async def analyze(self, audio: bytes) -> dict:
             raise RuntimeError("model failure")
@@ -25,7 +25,12 @@ def test_runner_marks_job_failed_when_analyzer_raises():
     registry = JobRegistry()
     job = registry.create(owner_key="test-owner")
 
-    asyncio.run(JobRunner(registry, FailingAnalyzer()).run(job.job_id, b"audio"))
+    with caplog.at_level("ERROR"):
+        asyncio.run(JobRunner(registry, FailingAnalyzer()).run(job.job_id, b"audio"))
+
+    assert job.job_id in caplog.text
+    assert "RuntimeError" in caplog.text
+    assert "model failure" in caplog.text
 
     failed = registry.get(job.job_id)
     assert failed.status == "failed"

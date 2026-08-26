@@ -40,7 +40,7 @@ function onDrop(event) {
 
 <template>
   <div
-    class="flex min-h-80 cursor-pointer flex-col items-center justify-center border-2 border-dashed p-8 text-center transition sm:min-h-96"
+    class="flex min-h-0 cursor-pointer flex-col items-center justify-center border-2 border-dashed px-8 py-[30px] text-center transition sm:min-h-96"
     :class="isDragging ? 'border-blue-500 bg-blue-50' : 'border-blue-200 bg-white hover:bg-blue-50/40'"
     role="button"
     tabindex="0"
@@ -59,14 +59,14 @@ function onDrop(event) {
       @change="onFileChange"
     />
     <CloudArrowUpIcon class="h-16 w-20 text-blue-600" aria-hidden="true" />
-    <p class="mt-5 text-lg font-extrabold text-slate-800">파일을 여기로 드래그하거나 클릭하여 업로드</p>
+    <p class="mt-[10px] text-lg font-extrabold text-slate-800">파일을 여기로 드래그하거나 클릭하여 업로드</p>
     <p class="mt-2 text-sm text-slate-400">지원 형식: WAV, MP3, M4A</p>
-    <div class="my-7 flex w-full max-w-md items-center gap-4 text-sm text-slate-400">
+    <div class="my-7 hidden w-full max-w-md items-center gap-4 text-sm text-slate-400 sm:flex">
       <span class="h-px flex-1 bg-slate-200" />
       또는
       <span class="h-px flex-1 bg-slate-200" />
     </div>
-    <button type="button" class="inline-flex items-center gap-2 border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-blue-600 shadow-sm" @click.stop="openFilePicker">
+    <button type="button" class="mt-5 inline-flex items-center gap-2 border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-blue-600 shadow-sm sm:mt-0" @click.stop="openFilePicker">
       <FolderOpenIcon class="h-5 w-5" aria-hidden="true" />
       파일 선택
     </button>

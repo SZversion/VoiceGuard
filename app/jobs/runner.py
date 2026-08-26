@@ -1,5 +1,10 @@
+import logging
+
 from app.analysis.interfaces import Analyzer
 from app.jobs.registry import InvalidJobTransition, JobRegistry
+
+
+logger = logging.getLogger(__name__)
 
 
 class JobRunner:
@@ -34,7 +39,13 @@ class JobRunner:
             )
         except InvalidJobTransition:
             return
-        except Exception:
+        except Exception as exc:
+            logger.error(
+                "Analysis job failed: %s (%s): %s",
+                job_id,
+                type(exc).__name__,
+                str(exc),
+            )
             job = self.registry.get(job_id)
             if job is None or job.status == "cancelled":
                 return

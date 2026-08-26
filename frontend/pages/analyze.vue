@@ -34,6 +34,7 @@ const isTerminal = computed(() => terminalStatuses.includes(status.value))
 const steps = computed(() => analysis.value?.steps?.length ? analysis.value.steps : defaultSteps)
 const progress = computed(() => Number(analysis.value?.progress || 0))
 const currentStage = computed(() => analysis.value?.stage || 'queued')
+const currentStepElement = ref(null)
 
 const statusLabel = computed(() => ({
   queued: '분석 준비 중',
@@ -125,8 +126,21 @@ async function handleCancel() {
 }
 
 function goToUpload() {
-  router.push('/')
+  router.push('/upload')
 }
+
+function setCurrentStepElement(element, step) {
+  if (step.key === currentStage.value) currentStepElement.value = element
+}
+
+watch(currentStage, async (nextStage, previousStage) => {
+  if (!nextStage || nextStage === previousStage) return
+
+  await nextTick()
+  if (window.matchMedia('(max-width: 639px)').matches) {
+    currentStepElement.value?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+})
 
 onMounted(async () => {
   await loadStatus()
@@ -152,7 +166,7 @@ onBeforeUnmount(stopPolling)
     </div>
 
     <div v-else class="mx-auto max-w-5xl space-y-6">
-      <section class="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section class="hidden items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex">
         <span class="flex h-16 w-16 shrink-0 items-center justify-center bg-blue-50 text-blue-600">
           <MusicalNoteIcon class="h-9 w-9" aria-hidden="true" />
         </span>
@@ -183,7 +197,7 @@ onBeforeUnmount(stopPolling)
         <div class="mt-8 border-t border-slate-100 pt-6">
           <h2 class="text-xl font-extrabold text-slate-900">분석 단계</h2>
           <ol class="mt-6 space-y-0">
-            <li v-for="(step, index) in steps" :key="step.key" class="relative flex gap-4 pb-7 last:pb-0">
+            <li v-for="(step, index) in steps" :key="step.key" :ref="(element) => setCurrentStepElement(element, step)" class="relative flex scroll-mt-6 gap-4 pb-7 last:pb-0">
               <span v-if="index < steps.length - 1" class="absolute left-4 top-9 h-full w-0.5 bg-slate-200" aria-hidden="true" />
               <span
                 class="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 bg-white"

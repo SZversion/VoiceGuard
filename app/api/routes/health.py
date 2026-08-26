@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
 
 router = APIRouter(tags=["system"])
@@ -10,9 +10,11 @@ def health() -> dict[str, str]:
 
 
 @router.get("/model-status", summary="Check analysis model status")
-def model_status() -> dict[str, str | bool]:
-    return {
-        "stt": "not_ready",
-        "classifier": "not_ready",
-        "analyzable": False,
-    }
+def model_status(request: Request) -> dict[str, str | bool]:
+    if not getattr(request.app.state, "runtime_started", False):
+        return {
+            "stt": "not_ready",
+            "classifier": "not_ready",
+            "analyzable": False,
+        }
+    return dict(request.app.state.model_status)

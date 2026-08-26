@@ -16,7 +16,7 @@ const steps = [
 </script>
 
 <template>
-  <ol class="mx-auto mb-10 flex max-w-3xl items-start justify-between" aria-label="분석 진행 단계">
+  <ol class="mx-auto mb-14 hidden max-w-3xl items-start justify-between sm:flex sm:mb-10" aria-label="분석 진행 단계">
     <li v-for="(step, index) in steps" :key="step.number" class="flex flex-1 items-start last:flex-none">
       <div class="flex flex-col items-center">
         <span
