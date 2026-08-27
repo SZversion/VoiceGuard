@@ -48,7 +48,7 @@
     <rect x="1456" y="550" width="258" height="104" rx="16" fill="#fdf2f8" stroke="#f9a8d4"/>
   </g>
   <g class="body">
-    <text x="108" y="585">서비스 접속</text><text x="108" y="612">개인정보 안내 동의</text>
+    <text x="108" y="585">서비스 접속</text><text x="108" y="612">서비스 소개와 이용안내</text>
     <text x="382" y="585">준비 상태 확인</text><text x="382" y="612">업로드 화면 진입</text>
     <text x="656" y="585">WAV·MP3·M4A 선택</text><text x="656" y="612">분석 시작</text>
     <text x="930" y="585">단계별 진행 상태 확인</text><text x="930" y="612">필요 시 분석 취소</text>
@@ -66,12 +66,12 @@
     <rect x="1456" y="760" width="258" height="104" rx="16" fill="#fff7ed" stroke="#fed7aa"/>
   </g>
   <g class="body">
-    <text x="108" y="800"><tspan x="108" dy="0">내 정보가 저장되거나</tspan><tspan x="108" dy="28">유출되지 않을까?</tspan></text>
-    <text x="382" y="800"><tspan x="382" dy="0">분석을 바로 시작해도</tspan><tspan x="382" dy="28">되는지 모르겠다.</tspan></text>
-    <text x="656" y="800"><tspan x="656" dy="0">파일 형식·손상 여부를</tspan><tspan x="656" dy="28">판단하기 어렵다.</tspan></text>
-    <text x="930" y="800"><tspan x="930" dy="0">얼마나 기다려야 하는지,</tspan><tspan x="930" dy="28">현재 무엇을 하는지 모른다.</tspan></text>
-    <text x="1204" y="800"><tspan x="1204" dy="0">결과를 믿어도 되는지,</tspan><tspan x="1204" dy="28">어떤 문장이 근거인지 모른다.</tspan></text>
-    <text x="1478" y="800"><tspan x="1478" dy="0">지금 무엇을 해야</tspan><tspan x="1478" dy="28">안전한지 막막하다.</tspan></text>
+    <text x="108" y="800"><tspan x="108" dy="0">전화 상대가 정말</tspan><tspan x="108" dy="28">공공기관 직원인지 구분하기 어렵다.</tspan></text>
+    <text x="382" y="800"><tspan x="382" dy="0">통화가 끝난 뒤에도</tspan><tspan x="382" dy="28">내가 사기를 당한건지 확신하기 어렵다.</tspan></text>
+    <text x="656" y="800"><tspan x="656" dy="0">송금·앱 설치·URL 접속 요구를</tspan><tspan x="656" dy="28">거절해야 할지 판단하기 어렵다.</tspan></text>
+    <text x="930" y="800"><tspan x="930" dy="0">사기라고 느껴도</tspan><tspan x="930" dy="28">현재 무엇을 먼저 확인하고 신고해야 할지 모르겠다.</tspan></text>
+    <text x="1204" y="800"><tspan x="1204" dy="0">이 통화가 정말 의심스러운지</tspan><tspan x="1204" dy="28">판단하기 어렵다.</tspan></text>
+    <text x="1478" y="800"><tspan x="1478" dy="0">지금 무엇을 해야</tspan><tspan x="1478" dy="28">번호 조회·가족 문의·신고 등 다음 행동을 모르겠다.</tspan></text>
   </g>
 
   <text x="86" y="940" class="label">4. 서비스가 제공하는 해결</text>
