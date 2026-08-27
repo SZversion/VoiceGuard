@@ -75,6 +75,7 @@ async function loadResult() {
 }
 
 function goToUpload() {
+  analysisStore.clear()
   router.push('/upload')
 }
 
