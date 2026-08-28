@@ -196,3 +196,24 @@ def test_corrects_allowlisted_domain_spacing(source, target):
     result = corrector.correct(source)
 
     assert result.corrected_transcript == target
+
+
+@pytest.mark.parametrize(
+    ("source", "target"),
+    [
+        ("금융 감독원", "금융감독원"),
+        ("인증 번호", "인증번호"),
+        ("비밀 번호", "비밀번호"),
+        ("안전 계좌", "안전계좌"),
+        ("공인 인증서", "공인인증서"),
+    ],
+)
+def test_default_spacing_draft_rules_apply_only_when_enabled(source, target):
+    corrector = DomainTermCorrector(
+        load_default_domain_rules(),
+        enabled_kinds=("typo", "spacing"),
+    )
+
+    result = corrector.correct(source)
+
+    assert result.corrected_transcript == target
