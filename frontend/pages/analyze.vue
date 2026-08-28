@@ -130,6 +130,8 @@ async function handleCancel() {
   try {
     analysis.value = await cancelAnalysis(jobId.value)
     stopPolling()
+    analysisStore.clear()
+    await router.push('/upload')
   } catch {
     errorMessage.value = '분석을 취소하지 못했습니다. 잠시 후 다시 시도해주세요.'
   } finally {

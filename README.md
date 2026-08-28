@@ -33,6 +33,79 @@
 
 이번 MVP에서는 모바일 앱이나 통화 기능을 직접 구현하지 않습니다. Nuxt.js 프론트엔드와 FastAPI 백엔드를 통해 음성 파일 입력, STT, 텍스트 분류, 대응 안내까지 이어지는 핵심 분석 파이프라인을 검증합니다.
 
+## Repository Structure
+
+현재 저장소는 실행 가능한 서비스 코드와 모델·데이터 실험 자산을 분리해 관리합니다. 아래 트리에는 소스 관리 대상인 주요 폴더만 표시했으며, `node_modules`, `.nuxt`, 모델 캐시, Python 캐시와 같은 생성 폴더는 제외했습니다.
+
+```text
+.
+├─ app/                         # FastAPI 백엔드와 Streamlit 로컬 테스트
+│  ├─ analysis/                 # 오디오, STT, 정규화, 청킹, 교정, 품질, 분류, 집계
+│  │  ├─ analyzer.py            # STT → 교정·품질 필터 → 분류 → 결과 집계
+│  │  ├─ audio.py               # 오디오 입력 검증·전처리
+│  │  ├─ audio_chunking.py      # 타임스탬프 기반 음성 청크 전사
+│  │  ├─ chunking.py            # 텍스트 청킹
+│  │  ├─ domain_corrector.py    # 검토된 도메인 오탈자 교정
+│  │  ├─ transcript_quality.py  # 깨진 전사·반복 전사 품질 필터
+│  │  ├─ text_normalizer.py     # 전사 텍스트 정규화
+│  │  ├─ stt.py                 # STT 인터페이스
+│  │  ├─ whisper_transcriber.py  # Whisper 전사 구현
+│  │  ├─ onnx_classifier.py     # ONNX 분류기 구현
+│  │  └─ model_loader.py        # STT·분류 모델 로더
+│  ├─ api/                      # FastAPI 앱·라우트·오류 계약
+│  │  └─ routes/                # 분석, 작업 상태·결과, 헬스체크 API
+│  ├─ core/                     # 요청 제어 등 공통 백엔드 기능
+│  ├─ jobs/                     # 비동기 분석 작업·상태·정리
+│  └─ streamlit_app.py          # 로컬 파이프라인 테스트 화면
+├─ frontend/                    # Nuxt 3 사용자 화면
+│  ├─ pages/                    # 업로드·분석 진행·결과·도움말 화면
+│  ├─ components/               # 공통 UI 컴포넌트
+│  ├─ composables/              # 백엔드·Mock API 호출
+│  ├─ stores/                   # 분석 작업·결과 상태
+│  ├─ mocks/                    # 백엔드 없이 화면을 확인하는 Mock 데이터
+│  ├─ types/                    # 프론트엔드 분석 타입
+│  ├─ assets/                   # 전역 CSS
+│  └─ public/                   # 아이콘·정적 파일
+├─ data/                        # 원천·가공 데이터와 도메인 사전
+│  ├─ raw/                      # 원본 음성·데이터셋(저장소 커밋 금지 대상 확인)
+│  ├─ interim/                  # 중간 처리 결과
+│  ├─ processed/                # 전처리·가공 데이터
+│  ├─ labels/                   # 라벨 및 검수 결과
+│  ├─ manifests/                # 데이터 분할·파일 목록
+│  ├─ stt_dictionary/           # STT 어휘·도메인 교정 규칙
+│  └─ stt_evaluation/           # STT 평가용 데이터·결과
+├─ configs/                     # 모델·실험 설정
+├─ models/                      # 로컬 모델·체크포인트(대용량 파일 커밋 금지)
+├─ outputs/                     # STT·분류·평가 실행 산출물
+├─ src/                         # 노트북·실험에서 사용하는 모듈형 연구 코드
+│  ├─ audio/ ├─ stt/ ├─ text/ ├─ pipeline/ ├─ models/ ├─ guidance/ └─ utils/
+├─ notebooks/                   # 오디오 STT·텍스트 분류·평가 노트북
+├─ tests/                       # 자동 테스트
+│  ├─ analysis/                 # 분석기·STT·청킹·교정·분류 테스트
+│  ├─ api/                      # FastAPI·API 계약·E2E 테스트
+│  ├─ jobs/                     # 작업 상태·정리 테스트
+│  ├─ integration/              # 컴포넌트 통합 테스트
+│  ├─ deployment/               # 배포 설정 테스트
+│  ├─ tools/                    # 평가 도구 테스트
+│  └─ fixtures/ · support/      # 테스트 공통 fixture·지원 코드
+├─ tools/                       # 전사·평가·데이터 처리 실행 도구
+├─ docs/                        # 설계·운영·성능·기능 Spec
+│  └─ specs/                    # 백엔드·프론트·STT·분류·교정 Spec
+├─ third_party/                 # 로컬 실행에 필요한 외부 바이너리
+├─ vendor/                      # 학습·실험 보조 코드
+├─ requirements.txt             # STT·학습·평가 의존성
+├─ requirements-backend.txt     # FastAPI 백엔드 실행 의존성
+├─ Dockerfile                   # Railway 등 컨테이너 실행 설정
+└─ .env.example                 # 환경변수 이름 예시(실제 값은 커밋 금지)
+```
+
+### 서비스 코드와 실험 자산의 구분
+
+- 서비스 실행 경로는 `app/`과 `frontend/`입니다.
+- `data/`, `models/`, `outputs/`는 로컬 평가·학습 자산이며 음성 원본, 개인정보, 대용량 모델은 저장소에 커밋하지 않습니다.
+- `src/`, `notebooks/`, `tools/`는 연구·평가·재현을 위한 코드입니다. 운영 API에서 사용하는 구현은 `app/` 기준으로 확인합니다.
+- 도메인 오탈자 규칙은 `data/stt_dictionary/domain_corrections.json`에서 관리하며, 상세 범위와 AC는 `docs/specs/stt-domain-typo-correction.md`와 `docs/specs/stt-transcript-quality-filter.md`에 기록합니다.
+
 ### One-Line Definition
 
 사용자가 보이스피싱 여부를 스스로 판단하기 전에 통화 내용을 분석하여 위험 징후와 대응 행동을 알려주는 음성 파일 분석 서비스입니다.
@@ -404,23 +477,34 @@ Nuxt.js 결과 화면
 
 같은 폴더의 음성·정답 TXT 쌍으로 Whisper-small을 LoRA 파인튜닝하려면 [Whisper LoRA 실행 가이드](docs/whisper_lora_finetuning_guide.md)를 참고합니다. 먼저 `--dry-run`으로 데이터 쌍과 분할을 확인한 뒤 CUDA 환경에서 학습을 실행합니다.
 
-### 백엔드·프론트엔드 실행
+### 로컬 실행 방법
 
-```bash
+```powershell
 git clone https://github.com/aihuman-7th/proj1-e.git
 cd proj1-e
 
-# 백엔드
+# 백엔드 가상환경 및 의존성 설치
 python -m venv .venv
-.venv\\Scripts\\Activate.ps1
+.venv\Scripts\Activate.ps1
 pip install -r requirements-backend.txt
+
+# 백엔드 실행: 별도 터미널
 uvicorn app.api.main:app --host 0.0.0.0 --port 8000
 
-# 프론트엔드 (새 터미널)
+# 프론트엔드: 새 터미널
 cd frontend
 pnpm install
 pnpm dev
 ```
+
+프론트엔드 기본 주소는 `http://localhost:3000`이며, 실제 FastAPI와 연결하려면 `frontend/.env`에 다음을 설정합니다.
+
+```env
+NUXT_PUBLIC_USE_MOCK=false
+NUXT_PUBLIC_API_BASE=http://localhost:8000/api
+```
+
+`NUXT_PUBLIC_USE_MOCK=true`이면 백엔드 없이 Mock API로 화면 흐름만 확인할 수 있습니다. 백엔드 API 문서는 `http://localhost:8000/docs`, 헬스체크는 `http://localhost:8000/api/health`에서 확인합니다.
 
 ### 화면 흐름
 
