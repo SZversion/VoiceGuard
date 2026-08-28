@@ -1,15 +1,19 @@
-# AI Human 7기 : 보이스피싱 통화 분석 및 피해 예방 서비스
+# 보이스가드 : 보이스피싱 통화 분석 및 피해 예방 서비스
+
+> 통화 녹음파일을 분석하여 보이스피싱 의심 여부와 확인이 필요한 대화 구간을 제공하는 PC용 음성 분석 서비스입니다.
+>
+> **배포 상태:** 프론트엔드·백엔드 URL 제공됨 · **프론트엔드:** [voice-guard-project.netlify.app](https://voice-guard-project.netlify.app/) · **백엔드 상태:** [health 확인](https://proj1-e-production.up.railway.app/health) · [API 문서](https://proj1-e-production.up.railway.app/docs)
 
 ## 팀 정보
 
 | 항목      | 내용                                                          |
 | --------- | ------------------------------------------------------------- |
-| 프로젝트  | 보이스피싱 통화 녹음 분석 및 피해 예방 서비스 _(공식명 미정)_ |
+| 프로젝트  | 보이스가드 : 보이스피싱 통화 분석 및 피해 예방 서비스       |
 | 조명      | E조                                                           |
 | 조장      | 김호섭                                                        |
 | 조원      | 심태현, 김호섭, 박진형, 윤영호, 서정현                        |
 | 개발 기간 | 2주                                                           |
-| MVP 형태  | Nuxt.js·FastAPI 기반 음성 파일 분석 서비스 + Streamlit 테스트 |
+| MVP 형태  | Nuxt.js·FastAPI 기반 음성 파일 분석 서비스                 |
 
 ## 조원 소개
 
@@ -18,7 +22,7 @@
 | 김호섭 | [SZversion](https://github.com/SZversion) | 조장·통합·백업       | 일정 및 작업 조율, 파이프라인 통합, 공통 작업 지원          |
 | 심태현 | [SimonTH-0912](https://github.com/SimonTH-0912) | 보이스피싱 탐지 모델 | Dialog-KoELECTRA-Small 기반 분류 모델 및 PEFT·LoRA 미세조정 |
 | 박진형 | [jinyeong-731](https://github.com/jinyeong-731) | STT·데이터 전처리                  | 음성 데이터 전처리, 평가 데이터셋 구축 및 STT 품질 검증       |
-| 윤영호 | [labri70](https://github.com/labri70) | 프론트엔드·Streamlit 테스트 | Nuxt.js 화면 구현, 음성 파일 업로드, 분석 실행 및 결과 표시 |
+| 윤영호 | [labri70](https://github.com/labri70) | 프론트엔드               | Nuxt.js 화면 구현, 음성 파일 업로드, 분석 실행 및 결과 표시 |
 | 서정현 | [SJeongHyeon](https://github.com/SJeongHyeon) | 백엔드               | FastAPI API, 비동기 분석 작업 관리 및 Railway 배포           |
 
 ---
@@ -27,11 +31,15 @@
 
 보이스피싱 통화 녹음파일을 음성 분석 모델로 처리하여, 통화 내용이 보이스피싱으로 의심되는지 판단하고 대응 행동을 안내하는 서비스입니다.
 
-이번 MVP에서는 모바일 앱이나 통화 기능을 직접 구현하지 않습니다. Nuxt.js 프론트엔드와 FastAPI 백엔드를 통해 음성 파일 입력, STT, 텍스트 분류, 대응 안내까지 이어지는 핵심 분석 파이프라인을 검증합니다. Streamlit은 로컬 테스트 환경으로 사용합니다.
+이번 MVP에서는 모바일 앱이나 통화 기능을 직접 구현하지 않습니다. Nuxt.js 프론트엔드와 FastAPI 백엔드를 통해 음성 파일 입력, STT, 텍스트 분류, 대응 안내까지 이어지는 핵심 분석 파이프라인을 검증합니다.
 
 ### One-Line Definition
 
 사용자가 보이스피싱 여부를 스스로 판단하기 전에 통화 내용을 분석하여 위험 징후와 대응 행동을 알려주는 음성 파일 분석 서비스입니다.
+
+## 문제 정의
+
+보이스피싱 통화를 정상적인 금융·수사 절차로 오인하기 쉬운 사용자는 통화 내용의 위험 징후를 즉시 판단하기 어려우므로, 통화 녹음파일을 전사·분류하여 확인이 필요한 구간과 대응 행동을 제공하는 서비스가 필요합니다.
 
 ---
 
@@ -106,7 +114,22 @@ Dialog-KoELECTRA-Small + PEFT·LoRA 분류
 | 위험도 산출     | 청크별 점수 계산 및 통화 단위 결과 집계         |
 | 대응 안내       | 검토된 대응 문구와 행동 안내 제공               |
 | Nuxt.js 화면     | 파일 업로드, 분석 상태, 결과 및 안내 표시       |
-| Streamlit 테스트 | 로컬 환경에서 전체 분석 파이프라인 검증         |
+
+### 사용자가 할 수 있는 일
+
+- 통화 녹음파일을 업로드하고 파일 형식·손상 여부를 확인할 수 있습니다.
+- 음성을 한국어 텍스트로 전사하고, 전사문 오탈자·과도하게 깨진 구간을 정제할 수 있습니다.
+- 통화 전체를 정상 통화 또는 보이스피싱 의심 통화로 분류할 수 있습니다.
+- 위험도가 높은 대화 구간과 검토된 대응 행동을 확인할 수 있습니다.
+
+## Demo
+
+실제 서비스 시연 영상 또는 공개 가능한 음성 샘플 링크를 추가할 영역입니다.
+
+- 배포 서비스: [voice-guard-project.netlify.app](https://voice-guard-project.netlify.app/)
+- 백엔드 API 문서: [proj1-e-production.up.railway.app/docs](https://proj1-e-production.up.railway.app/docs)
+- 짧은 사용 영상: [보이스가드 서비스 데모 영상](https://drive.google.com/file/d/1u3DY856VDEZkHz8jf1ajQzmT7vNgpgHn/view?usp=sharing)
+- 음성 샘플: 원본 음성·전사문에 개인정보가 포함되지 않고 이용·공개 조건을 확인한 경우에만 추가
 
 ---
 
@@ -178,11 +201,11 @@ STT 개선용 정제 데이터에는 다음 처리를 적용했습니다.
 | Stage               | Model / Technology                        | Purpose                                  |
 | ------------------- | ----------------------------------------- | ---------------------------------------- |
 | Audio Preprocessing | FFmpeg · librosa · torchaudio             | 음성 형식·샘플링·길이·음량 처리          |
-| STT                 | Whisper-small 또는 Faster-Whisper         | 한국어 통화 음성 전사 및 타임스탬프 생성 |
-| Text Classification | Dialog-KoELECTRA-Small + PEFT·LoRA (미정) | 청크별 정상/보이스피싱 위험 점수 산출    |
+| STT                 | Faster-Whisper (Whisper-small 계열)       | 한국어 통화 음성 전사 및 타임스탬프 생성 |
+| TTS                 | 사용하지 않음                             | MVP 범위 외                             |
+| Text Classification | Dialog-KoELECTRA-Small ONNX INT8         | 청크별 정상/보이스피싱 위험 점수 산출    |
 | Evidence Search     | 청크 점수 기반 상위 구간 선정              | 보이스피싱 의심 시 점수가 높은 상위 3개 구간 제공 |
 | Production UI       | Nuxt.js                                  | 음성 파일 업로드, 분석 상태 및 결과 표시       |
-| Test UI             | Streamlit                                | 로컬 환경에서 분석 파이프라인 검증             |
 
 > 프로젝트 결과는 공식적인 범죄·수사 판정이 아니라 모델 기반 참고 정보입니다. 상위 점수 구간은 분석 결과를 확인하기 위한 참고 정보입니다.
 
@@ -207,6 +230,8 @@ Dialog-KoELECTRA-Small + LoRA 분류
     ↓
 Nuxt.js 결과 화면
 ```
+
+![분석 파이프라인 아키텍처](docs/analysis-pipeline-architecture.svg)
 
 ### 결과 구성
 
@@ -233,7 +258,6 @@ Nuxt.js 결과 화면
 - 고정 대응 문구 안내
 - Nuxt.js 기반 운영 화면
 - 비동기 분석 작업 및 단계별 진행 상태 표시
-- Streamlit 기반 로컬 테스트 화면
 - STT·분류·통화 단위 집계의 성능 평가
 - 분석 완료 후 원본 음성·녹취문 삭제
 
@@ -277,6 +301,35 @@ Nuxt.js 결과 화면
 | 오류 분석          | False Negative·False Positive 대표 문장, 점수, 음질, 출처 기록    |
 | E2E 동작           | 음성 업로드부터 결과 표시 안내까지 전체 흐름 확인                 |
 | 개인정보 처리      | 분석 완료 후 원본 음성·녹취문·임시 데이터 삭제 확인               |
+
+### 실험 결과
+
+#### STT 평가
+
+금융감독원 보이스피싱 평가 샘플 중 `36549~36553`에 해당하는 동일 5개 통화를 사용했습니다. 8kHz와 16kHz 전처리 조건을 비교하고, 사람이 작성한 정답 전사문과 비교하여 CER과 WER를 측정했습니다.
+
+| 실험 조건 | 평가 통화 수 | 평균 CER | 평균 WER |
+| --- | ---: | ---: | ---: |
+| 8kHz 전처리 | 5 | 0.3260 | 0.5843 |
+| 16kHz 전처리 | 5 | 0.2994 | 0.5572 |
+| Base Whisper-small 테스트 | 30 | 0.3309 | 0.6046 |
+
+16kHz 전처리는 8kHz 전처리보다 CER이 `0.0266`, WER가 `0.0271` 낮았습니다.
+
+#### 보이스피싱 분류 평가
+
+총 499개 샘플을 대상으로 원본 전사문과 오탈자 보정 전사문의 분류 결과를 비교했습니다. 양성 클래스는 보이스피싱으로 정의했습니다.
+
+| 입력 전사문 | TP | TN | FP | FN | Accuracy | Precision | Recall | F1 | FPR | FNR |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 원본 전사문 | 194 | 155 | 148 | 2 | 69.94% | 56.73% | 98.98% | 72.12% | 48.84% | 1.02% |
+| 오탈자 보정 전사문 | 194 | 155 | 148 | 2 | 69.94% | 56.73% | 98.98% | 72.12% | 48.84% | 1.02% |
+
+오탈자 보정으로 전사문이 변경된 샘플은 11건이었으나, 최종 분류 결과가 변경된 샘플은 0건이었습니다.
+
+이번 평가에서는 보이스피싱 Recall이 98.98%, FNR이 1.02%로 보이스피싱을 놓치는 비율은 낮았습니다. 반면 정상 통화를 보이스피싱으로 판단한 FPR은 48.84%로 높아, 정상 금융상담 Hard Negative를 활용한 추가 평가와 임계값 조정이 필요합니다.
+
+> 위 결과는 현재 저장소의 로컬 평가 산출물 기준입니다. 독립 Test Set 여부와 세부 데이터 분할을 최종 확인한 뒤 공식 성능으로 사용해야 합니다. 모델 결과는 법적·수사적 확정 판정이 아닌 참고 정보입니다.
 
 ### Evaluation Priority
 
@@ -330,9 +383,7 @@ Nuxt.js 결과 화면
 
 ### 음성 STT·화자 분리 라벨 생성
 
-`data/raw/impersonation`과 `data/raw/loanScam`의 음성을 Faster-Whisper로 전사하려면 [CPU STT 실행 가이드](docs/faster-whisper-stt.md)를 참고합니다.
-
-> 실제 소스 코드 구조와 의존성이 확정된 후 업데이트합니다.
+`data/raw/impersonation`과 `data/raw/loanScam`의 음성을 Faster-Whisper로 전사하려면 [Whisper LoRA 실행 가이드](docs/whisper_lora_finetuning_guide.md)를 참고합니다.
 
 ### CPU STT 실행
 
@@ -351,20 +402,27 @@ Nuxt.js 결과 화면
 
 ### Whisper LoRA 파인튜닝
 
-같은 폴더의 음성·정답 TXT 쌍으로 Whisper-small을 LoRA 파인튜닝하려면 [Whisper LoRA 실행 가이드](docs/whisper-lora-finetuning.md)를 참고합니다. 먼저 `--dry-run`으로 데이터 쌍과 분할을 확인한 뒤 CUDA 환경에서 학습을 실행합니다.
+같은 폴더의 음성·정답 TXT 쌍으로 Whisper-small을 LoRA 파인튜닝하려면 [Whisper LoRA 실행 가이드](docs/whisper_lora_finetuning_guide.md)를 참고합니다. 먼저 `--dry-run`으로 데이터 쌍과 분할을 확인한 뒤 CUDA 환경에서 학습을 실행합니다.
 
-### 예정 실행 방법
+### 백엔드·프론트엔드 실행
 
 ```bash
 git clone https://github.com/aihuman-7th/proj1-e.git
 cd proj1-e
 
-# 의존성 설치 방법은 추후 확정
-# 로컬 테스트 환경
-# streamlit run app/streamlit_app.py
+# 백엔드
+python -m venv .venv
+.venv\\Scripts\\Activate.ps1
+pip install -r requirements-backend.txt
+uvicorn app.api.main:app --host 0.0.0.0 --port 8000
+
+# 프론트엔드 (새 터미널)
+cd frontend
+pnpm install
+pnpm dev
 ```
 
-### 예정 화면 흐름
+### 화면 흐름
 
 1. Nuxt.js 화면에서 음성 파일을 업로드합니다.
 2. 분석 시작 버튼을 누릅니다.
@@ -384,3 +442,9 @@ cd proj1-e
 6. 기능 구현 전에 `docs/specs/{기능명}.md`에 Spec을 작성합니다.
 
 자세한 AI 에이전트 작업 지침은 [AGENTS.md](./AGENTS.md)를 참고하세요.
+
+## 라이선스·윤리 고지
+
+- 사용 모델과 데이터셋은 각 배포처의 라이선스·이용 조건을 확인한 뒤 사용하며, 모델별 정확한 라이선스 표기는 최종 배포 전에 확정합니다.
+- 음성 원본·전사문은 저장소에 커밋하지 않으며, 분석 중 임시 데이터는 작업 종료 후 삭제합니다. 얼굴 데이터는 사용하지 않습니다.
+- 결과는 법적·수사적 확정 판정이 아닌 모델 기반 참고 정보이며, 실제 대응 전 관련 기관이나 전문가의 확인이 필요합니다.
