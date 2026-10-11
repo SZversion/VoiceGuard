@@ -139,6 +139,8 @@ class WhisperLoRATranscriber:
                 generated_ids = self.model.generate(
                     **inputs,
                     max_new_tokens=self.max_new_tokens,
+                    language="ko",
+                    task="transcribe",
                 )
             texts = self.processor.batch_decode(
                 generated_ids,

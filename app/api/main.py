@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.analysis.analyzer import VoicePhishingAnalyzer
 from app.analysis.domain_corrector import DomainTermCorrector, load_default_domain_rules
 from app.analysis.model_loader import load_text_classifier
-from app.analysis.whisper_lora_loader import load_whisper_lora_transcriber
+from app.analysis.ct2_whisper_loader import load_optimized_whisper_transcriber
 from app.api.exception_handlers import request_validation_exception_handler, unhandled_exception_handler
 from app.api.request_id import RequestIdMiddleware
 from app.api.routes.analyze import router as analyze_router
@@ -109,7 +109,7 @@ def create_app(
     async def lifespan(app: FastAPI):
         _initialize_runtime(
             app,
-            stt_loader or load_whisper_lora_transcriber,
+            stt_loader or load_optimized_whisper_transcriber,
             classifier_loader or load_text_classifier,
         )
         app.state.runtime_started = True

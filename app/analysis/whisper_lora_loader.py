@@ -51,6 +51,7 @@ def load_whisper_lora_transcriber(
         processor = (processor_factory or _processor_factory)(selected_base)
         base = (base_model_factory or _base_model_factory)(selected_base)
         model = (adapter_factory or _adapter_factory)(base, selected_adapter)
+        model = model.merge_and_unload()
         if hasattr(model, "to"):
             model.to(selected_device)
         if hasattr(model, "eval"):
