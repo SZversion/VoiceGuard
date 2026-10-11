@@ -10,6 +10,8 @@ LABELS = {
     1: "voice_phishing",
 }
 
+BATCH_SIZE = 8
+
 
 @dataclass(frozen=True)
 class ClassifierOutput:
@@ -36,8 +38,17 @@ class TextClassifier:
             truncation=True,
             max_length=self.max_length,
         )
-        output = self.model(**encoded)
-        logits = self._as_logits(output.logits)
+        try:
+            import torch
+        except ImportError as exc:
+            raise RuntimeError("torch is required for PyTorch classifier inference") from exc
+
+        with torch.inference_mode():
+            output = self.model(**encoded)
+        return self._result_from_logits(output.logits)
+
+    def _result_from_logits(self, logits: Any) -> ClassifierOutput:
+        logits = self._as_logits(logits)
         if len(logits) != len(LABELS):
             raise ValueError("unsupported classifier class id")
 
@@ -53,8 +64,35 @@ class TextClassifier:
         )
 
     def classify_chunks(self, transcript: str) -> list[tuple[str, ClassifierOutput]]:
+        if not transcript or not transcript.strip():
+            raise ValueError("transcript must not be empty")
         chunks = chunk_text_by_tokens(transcript, self.tokenizer, self.max_length)
-        return [(chunk, self.classify(chunk)) for chunk in chunks]
+        if len(chunks) == 1:
+            return [(chunks[0], self.classify(chunks[0]))]
+
+        import torch
+
+        results: list[tuple[str, ClassifierOutput]] = []
+        for start in range(0, len(chunks), BATCH_SIZE):
+            batch = chunks[start : start + BATCH_SIZE]
+            encoded = self.tokenizer(
+                batch,
+                return_tensors="pt",
+                padding=True,
+                truncation=True,
+                max_length=self.max_length,
+            )
+            with torch.inference_mode():
+                logits = self.model(**encoded).logits
+            if hasattr(logits, "detach"):
+                logits = logits.detach().cpu().tolist()
+            if len(logits) != len(batch):
+                raise ValueError("classifier output batch size does not match input")
+            results.extend(
+                (chunk, self._result_from_logits(row))
+                for chunk, row in zip(batch, logits)
+            )
+        return results
 
     @staticmethod
     def _as_logits(logits: Any) -> list[float]:

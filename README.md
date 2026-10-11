@@ -274,13 +274,45 @@ STT 개선용 정제 데이터에는 다음 처리를 적용했습니다.
 | Stage               | Model / Technology                        | Purpose                                  |
 | ------------------- | ----------------------------------------- | ---------------------------------------- |
 | Audio Preprocessing | FFmpeg · librosa · torchaudio             | 음성 형식·샘플링·길이·음량 처리          |
-| STT                 | Faster-Whisper (Whisper-small 계열)       | 한국어 통화 음성 전사 및 타임스탬프 생성 |
+| STT                 | Faster-Whisper CPU INT8 (Whisper-small + 병합 LoRA) | 한국어 고정 전사 및 30초 청크 구간 반환 |
 | TTS                 | 사용하지 않음                             | MVP 범위 외                             |
 | Text Classification | Dialog-KoELECTRA-Small ONNX INT8         | 청크별 정상/보이스피싱 위험 점수 산출    |
 | Evidence Search     | 청크 점수 기반 상위 구간 선정              | 보이스피싱 의심 시 점수가 높은 상위 3개 구간 제공 |
 | Production UI       | Nuxt.js                                  | 음성 파일 업로드, 분석 상태 및 결과 표시       |
 
 > 프로젝트 결과는 공식적인 범죄·수사 판정이 아니라 모델 기반 참고 정보입니다. 상위 점수 구간은 분석 결과를 확인하기 위한 참고 정보입니다.
+
+### 전사 모델 변환과 실행
+
+기본 전사는 `openai/whisper-small` + `VoiceGuardproject/whisper-lora-run-011`의
+LoRA를 병합한 CTranslate2 INT8 모델을 사용합니다. 모델은 한 번 변환한 뒤
+서버 시작 때 로드해 재사용합니다. private adapter 접근용 `HF_TOKEN`은 `.env` 또는
+환경변수로 주입하세요. 다음 명령 전에 환경변수를 로드해야 합니다.
+
+```sh
+pip install -r requirements-backend.txt
+python -m tools.export_whisper_lora_ct2 --output-dir models/whisper-lora/ct2-int8
+uvicorn app.api.main:app --host 0.0.0.0 --port 8000
+```
+
+기본값은 `STT_RUNTIME=faster-whisper`,
+`STT_CT2_MODEL_PATH=models/whisper-lora/ct2-int8`입니다. 변환 모델이 없거나
+manifest가 요청된 base/adapter와 다르면 STT는 error 상태가 됩니다.
+출력 폴더는 덮어쓰지 않으므로 모델을 갱신할 때 새 경로로 변환하세요.
+`STT_RUNTIME=pytorch`로 전환하면 LoRA 병합·한국어 고정의 PyTorch 경로를 사용합니다.
+INT8 전사는 CPU로 고정되며 `STT_DEVICE`는 PyTorch 경로에만 적용됩니다.
+
+Docker에서는 변환 모델을 담은 볼륨을 마운트하고 `STT_CT2_MODEL_PATH`를 컨테이너의
+모델 경로로 지정합니다. 예를 들어 빈 `./hf-cache` 폴더와 `.env`를 준비한 뒤:
+
+```sh
+docker build -t voiceguard-backend .
+docker run --rm --env-file .env -v "$(pwd)/hf-cache:/models" voiceguard-backend python -m tools.export_whisper_lora_ct2 --output-dir /models/whisper-lora/ct2-int8
+docker run --env-file .env -e STT_CT2_MODEL_PATH=/models/whisper-lora/ct2-int8 -v "$(pwd)/hf-cache:/models" -p 8000:8000 voiceguard-backend
+```
+
+위 Docker 명령은 POSIX shell 예시입니다. Windows PowerShell에서는 `$(pwd)` 대신
+모델 폴더의 절대 경로를 사용하세요. 모델·오디오·녹취는 커밋하지 않습니다.
 
 ---
 

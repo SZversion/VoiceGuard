@@ -8,5 +8,6 @@ RUN pip install --no-cache-dir -r requirements-backend.txt
 COPY app ./app
 COPY configs ./configs
 COPY data ./data
+COPY tools/export_whisper_lora_ct2.py ./tools/export_whisper_lora_ct2.py
 
 CMD ["sh", "-c", "uvicorn app.api.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
